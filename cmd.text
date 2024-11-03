@@ -1,0 +1,2 @@
+npx --legacy-peer-deps shadcn@latest init -d
+npx --legacy-peer-deps shadcn@latest add button
