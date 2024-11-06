@@ -1,23 +1,39 @@
-export type AccessModifier = '+' | '-' | '#';
-
-interface Variable {
-    name: string;
-    type: string;
+interface UMLObject {
+    id: number;
+    shape: 
+    "class" | 
+    "extends" | 
+    "composition" | 
+    "aggregation" | 
+    "association" |
+    "implement" |
+    "interface";
 }
 
-interface Attribute extends Variable {
-    access: string;
+export interface UMLClass extends UMLObject {
+    name: string[];
+    attributes: string[];
+    methods: string[];
+    position: {
+        x: number,
+        y: number
+    }
 }
-interface Operation {
-    name: string;
-    access: string;
-    params: Variable[];
-    returnType: string;
 
+export interface UMLAssociation extends UMLObject {
+    source: number;
+    target: number;
 }
 
-export interface UMLClass {
-    className: string;
-    attributes: Attribute[];
-    operations: Operation[];
-}
+
+// The available shape options are:
+
+// class: Represents a class.
+// extends: Represents an inheritance relationship.
+// composition: Represents a composition relationship (strong ownership).
+// aggregation: Represents an aggregation relationship (looser ownership).
+// association: Represents a general association between classes.
+// implement: Represents a class implementing an interface.
+// interface: Represents an interface.
+
+
