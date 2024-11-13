@@ -1,2 +1,2 @@
 npx --legacy-peer-deps shadcn@latest init -d
-npx --legacy-peer-deps shadcn@latest add button
+npx --legacy-peer-deps shadcn@latest add dialog
