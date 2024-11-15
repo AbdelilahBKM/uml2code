@@ -23,30 +23,31 @@ model User {
 }
 
 model Project {
-  id           String   @id @default(cuid())
-  project_name String   @unique
-  user         User     @relation(fields: [userid], references: [id])
-  userid       String
-  created_at   DateTime @default(now())
-  update_at    DateTime @updatedAt
-  diagram      Diagram?
-  codeBase CodeBase?
+  id              String    @id @default(cuid())
+  project_name    String    @unique
+  project_snippet String    @unique
+  user            User      @relation(fields: [userid], references: [id])
+  userid          String
+  created_at      DateTime  @default(now())
+  update_at       DateTime  @updatedAt
+  diagram         Diagram?
+  codeBase        CodeBase?
 }
 
 model Diagram {
-  id          String     @id @default(cuid())
-  uml_classes UMLClass[]
+  id              String           @id @default(cuid())
+  uml_classes     UMLClass[]
   uml_association UMLAssociation[]
-  projectId String @unique
-  project Project @relation(fields: [projectId], references: [id])
+  projectId       String           @unique
+  project         Project          @relation(fields: [projectId], references: [id])
 }
 
 model CodeBase {
-  id String @id @default(cuid())
-  language String
-  code String
-  projectId String @unique
-  project Project @relation(fields: [projectId], references: [id])
+  id        String  @id @default(cuid())
+  language  String
+  code      String
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id])
 }
 
 model UMLClass {
@@ -61,12 +62,12 @@ model UMLClass {
 }
 
 model UMLAssociation {
-  id     Int    @id @default(autoincrement())
-  shape  String
-  source Int
-  target Int
+  id          Int     @id @default(autoincrement())
+  shape       String
+  source      Int
+  target      Int
   diagramId   String
-  uml_diagram Diagram     @relation(fields: [diagramId], references: [id])
+  uml_diagram Diagram @relation(fields: [diagramId], references: [id])
 }
 
 model Attribute {

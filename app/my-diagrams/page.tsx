@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
+import { Project } from '@/types/UMLClass.Type'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -17,12 +15,25 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { PlusCircle, Edit, Trash2, Code } from 'lucide-react'
+import DiagramCard from '@/components/DIagramCard'
 
 // Mock data for class diagrams
-const initialDiagrams = [
-  { id: 1, name: 'User Authentication System', lastModified: '2023-06-15', image: '/placeholder.svg?height=200&width=300' },
-  { id: 2, name: 'E-commerce Product Catalog', lastModified: '2023-06-14', image: '/placeholder.svg?height=200&width=300' },
-  { id: 3, name: 'Task Management App', lastModified: '2023-06-13', image: '/placeholder.svg?height=200&width=300' },
+const initialDiagrams: Project[]  = [
+  {
+    id: "1", project_name: 'User Authentication System', updated_at: '2023-06-15', project_snippet: '/placeholder.svg?height=200&width=300',
+    created_at: '',
+    diagram: undefined
+  },
+  {
+    id: "2", project_name: 'E-commerce Product Catalog', updated_at: '2023-06-14', project_snippet: '/placeholder.svg?height=200&width=300',
+    created_at: '',
+    diagram: undefined
+  },
+  {
+    id: "3", project_name: 'Task Management App', updated_at: '2023-06-13', project_snippet: '/placeholder.svg?height=200&width=300',
+    created_at: '',
+    diagram: undefined
+  },
 ]
 
 export default function Dashboard() {
@@ -84,43 +95,8 @@ export default function Dashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {diagrams.map((diagram) => (
-            <Card key={diagram.id}>
-              <CardHeader>
-                <CardTitle>{diagram.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video relative mb-4">
-                  <Image
-                    src={diagram.image}
-                    alt={`Class diagram for ${diagram.name}`}
-                    fill
-                    className="object-cover rounded-md"
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Last modified: {diagram.lastModified}
-                </p>
-              </CardContent>
-              <CardFooter className="flex flex-wrap gap-2">
-                <Button variant="outline" asChild>
-                  <Link href={`/edit/${diagram.id}`}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href={`/view-code/${diagram.id}`}>
-                    <Code className="mr-2 h-4 w-4" />
-                    View Code
-                  </Link>
-                </Button>
-                <Button variant="destructive" onClick={() => handleDeleteDiagram(diagram.id)}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
-              </CardFooter>
-            </Card>
+          {diagrams.map((project) => (
+            <DiagramCard project={project} />
           ))}
         </div>
       </main>

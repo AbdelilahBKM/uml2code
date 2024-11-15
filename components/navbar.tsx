@@ -11,7 +11,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="bg-background border-b absolute w-full z-10">
+    <header className="bg-background border-b absolute mb-11 w-full z-10">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/" className="text-2xl font-bold text-primary flex items-center">
         <ArrowDownUp />
