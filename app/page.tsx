@@ -18,7 +18,7 @@ export default function WelcomePage() {
               Streamline your development process and bring your ideas to life faster.
             </p>
             <Button asChild size="lg" className='bg-slate-900 hover:bg-slate-700'>
-              <Link href="/class-diagrams">Get Started for Free</Link>
+              <Link href="/my-diagrams">Get Started for Free</Link>
             </Button>
           </div>
           <div className='w-full h-full items-center justify-center hidden md:flex'>

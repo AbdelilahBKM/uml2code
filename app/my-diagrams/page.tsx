@@ -15,48 +15,46 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { PlusCircle, Edit, Trash2, Code } from 'lucide-react'
-import DiagramCard from '@/components/DIagramCard'
+import DiagramCard from '@/components/DiagramCard'
 
 // Mock data for class diagrams
-const initialDiagrams: Project[]  = [
+const initialProjects: Project[]  = [
   {
     id: "1", project_name: 'User Authentication System', updated_at: '2023-06-15', project_snippet: '/placeholder.svg?height=200&width=300',
     created_at: '',
-    diagram: undefined
   },
   {
     id: "2", project_name: 'E-commerce Product Catalog', updated_at: '2023-06-14', project_snippet: '/placeholder.svg?height=200&width=300',
     created_at: '',
-    diagram: undefined
   },
   {
     id: "3", project_name: 'Task Management App', updated_at: '2023-06-13', project_snippet: '/placeholder.svg?height=200&width=300',
     created_at: '',
-    diagram: undefined
   },
 ]
 
 export default function Dashboard() {
-  const [diagrams, setDiagrams] = useState(initialDiagrams)
+  const [projects, setProjects] = useState(initialProjects)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [newDiagramName, setNewDiagramName] = useState('')
 
   const handleAddDiagram = () => {
     if (newDiagramName.trim()) {
-      const newDiagram = {
-        id: diagrams.length + 1,
-        name: newDiagramName.trim(),
-        lastModified: new Date().toISOString().split('T')[0],
-        image: '/placeholder.svg?height=200&width=300',
+      const newProjects: Project = {
+        id: String(projects.length + 1),
+        project_name: newDiagramName.trim(),
+        updated_at: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString().split('T')[0],
+        project_snippet: '/placeholder.svg?height=200&width=300',
       }
-      setDiagrams([...diagrams, newDiagram])
+      setProjects([...projects, newProjects])
       setNewDiagramName('')
       setIsAddDialogOpen(false)
     }
   }
 
-  const handleDeleteDiagram = (id: number) => {
-    setDiagrams(diagrams.filter(diagram => diagram.id !== id))
+  const handleDeleteDiagram = (id: string) => {
+    setProjects(projects.filter(diagram => diagram.id !== id))
   }
 
   return (
@@ -95,8 +93,8 @@ export default function Dashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {diagrams.map((project) => (
-            <DiagramCard project={project} />
+          {projects.map((project) => (
+            <DiagramCard key={project.id} project={project} />
           ))}
         </div>
       </main>

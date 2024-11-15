@@ -33,7 +33,7 @@ export default function DiagramCard({project}: IDiagramCard) {
               </CardContent>
               <CardFooter className="flex flex-wrap gap-2">
                 <Button variant="outline" asChild>
-                  <Link href={`/edit/${project.id}`}>
+                  <Link href={`/my-diagrams/edit/${project.id}`}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </Link>
