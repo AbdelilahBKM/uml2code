@@ -1,6 +1,6 @@
 // shadcn/ui
 npx --legacy-peer-deps shadcn@latest init -d
-npx --legacy-peer-deps shadcn@latest add dialog
+npx --legacy-peer-deps shadcn@latest add alert-dialog
 
 // generate a random jwt key
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"

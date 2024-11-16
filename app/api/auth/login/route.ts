@@ -3,7 +3,7 @@ import { compare } from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { NextResponse } from 'next/server'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+const JWT_SECRET = process.env.JWT_SECRET
 
 export async function POST(request: Request) {
   const body = await request.json()
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   const token = jwt.sign(
     { id: user.id, email: user.email }, // Payload
     JWT_SECRET,  // Secret key
-    { expiresIn: '1h' } // Expiration time
+    // { expiresIn: '1h' } // Expiration time
   )
 
   // Send response with the JWT token

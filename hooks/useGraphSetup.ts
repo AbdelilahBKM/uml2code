@@ -137,7 +137,7 @@ export const useGraphSetup = (containerRef: React.RefObject<HTMLDivElement>) => 
     resizeObserver.observe(containerRef.current);
 
     // Load initial nodes and edges
-    fetch('http://localhost:5000/classes')
+    fetch('')
       .then((response) => response.json())
       .then((data) => {
         const cells: Cell[] = [];

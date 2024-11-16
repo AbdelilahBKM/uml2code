@@ -35,7 +35,7 @@ export default function AuthForm() {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          'Content-type': 'application/json',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       })
@@ -45,7 +45,7 @@ export default function AuthForm() {
       } else {
         console.log("success", results);
         dispatch(login({ access: results.token }));
-        router.push('my-diagrams');
+        router.back();
       }
 
 

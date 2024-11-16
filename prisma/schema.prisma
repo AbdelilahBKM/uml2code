@@ -25,11 +25,11 @@ model User {
 model Project {
   id              String    @id @default(cuid())
   project_name    String    @unique
-  project_snippet String    @unique
+  project_snippet String?   
   user            User      @relation(fields: [userid], references: [id])
   userid          String
   created_at      DateTime  @default(now())
-  update_at       DateTime  @updatedAt
+  updated_at      DateTime  @updatedAt
   diagram         Diagram?
   codeBase        CodeBase?
 }

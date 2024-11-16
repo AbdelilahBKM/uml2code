@@ -6,7 +6,6 @@ interface AuthState {
   token: string;
 }
 
-// Load token from localStorage only on the client side
 const loadTokenFromLocalStorage = (): AuthState => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
@@ -25,14 +24,14 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.token = action.payload.access;
       if (typeof window !== 'undefined') {
-        localStorage.setItem('token', state.token); // Store token in localStorage
+        localStorage.setItem('token', state.token);
       }
     },
     logout(state) {
       state.isAuthenticated = false;
       state.token = '';
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token'); // Remove token from localStorage
+        localStorage.removeItem('token');
       }
     },
     loadAuthState(state) {
@@ -42,7 +41,6 @@ const authSlice = createSlice({
           state.token = token;
           
         }
-      
     },
   },
 });

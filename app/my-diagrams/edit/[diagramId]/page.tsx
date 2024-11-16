@@ -1,18 +1,19 @@
-import { AddUML } from "@/components/AddClassCard";
-import Canvas from "@/components/Canvas";
+"use client"
+import EditDiagram from "@/components/editDiagram";
+import Dashboard from "@/components/MyDiagrams";
+import useAuth from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
 
-export default function Home() {
-  return (
-    <div className="w-full h-screen flex">
-      {/* Sidebar */}
-      <section className="w-1/5 h-full py-5 px-2 bg-gray-100">
-        <AddUML />
-      </section>
+const Admin = () => {
+    const { isAuth } = useAuth();
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => setIsClient(true), []);
 
-      {/* Main Content */}
-      <section className="w-4/5 h-full bg-white">
-        <Canvas />
-      </section>
-    </div>
-  );
-}
+    if (!isAuth) {
+        return null;
+    }
+
+    return isClient ? <EditDiagram /> : null;
+};
+
+export default Admin;

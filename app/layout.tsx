@@ -32,11 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased text-lg flex flex-col min-h-screen`}
       >
         <StoreProvider >
-          <Navbar />
-          <main className="flex-grow  bg-gradient-to-br from-background to-secondary/20">
+          
             {children}
-          </main>
-          <Footer />
+          
         </StoreProvider>
       </body>
     </html>
