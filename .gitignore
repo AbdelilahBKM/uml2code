@@ -38,4 +38,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Ignore Prisma dev.db file
 prisma/dev.db
+

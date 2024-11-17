@@ -25,6 +25,28 @@ export interface UMLAssociation extends UMLObject {
     target: number;
 }
 
+export interface Diagram {
+    id: string;
+    uml_classes: UMLClass[];
+    uml_association: UMLAssociation[];
+    
+}
+
+export interface Project {
+    id: string;
+    project_name: string;
+    project_snippet: string;
+    created_at: string;
+    updated_at: string;
+    diagram?: Diagram| null;
+}
+export interface User {
+    id: string;
+    username: string;
+    email: string;
+    projects: Project;
+}
+
 
 // The available shape options are:
 
