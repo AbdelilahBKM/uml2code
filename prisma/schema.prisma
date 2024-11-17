@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(cuid())
+  username   String
+  email      String    @unique
+  password   String
+  projects   Project[]
+  created_at DateTime  @default(now())
+}
+
+model Project {
+  id              String    @id @default(cuid())
+  project_name    String    @unique
+  project_snippet String?   
+  user            User      @relation(fields: [userid], references: [id])
+  userid          String
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  diagram         Diagram?
+  codeBase        CodeBase?
+}
+
+model Diagram {
+  id              String           @id @default(cuid())
+  uml_classes     UMLClass[]
+  uml_association UMLAssociation[]
+  projectId       String           @unique
+  project         Project          @relation(fields: [projectId], references: [id])
+}
+
+model CodeBase {
+  id        String  @id @default(cuid())
+  language  String
+  code      String
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model UMLClass {
+  id          Int         @id @default(autoincrement())
+  shape       String
+  name        String
+  attributes  Attribute[]
+  methods     Method[]
+  position    Position?
+  diagramId   String
+  uml_diagram Diagram     @relation(fields: [diagramId], references: [id])
+}
+
+model UMLAssociation {
+  id          Int     @id @default(autoincrement())
+  shape       String
+  source      Int
+  target      Int
+  diagramId   String
+  uml_diagram Diagram @relation(fields: [diagramId], references: [id])
+}
+
+model Attribute {
+  id          Int      @id @default(autoincrement())
+  visibility  String
+  name        String
+  type        String
+  uml_classId Int
+  uml_class   UMLClass @relation(fields: [uml_classId], references: [id])
+}
+
+model Method {
+  id          Int         @id @default(autoincrement())
+  visibility  String
+  name        String
+  returnType  String
+  uml_classId Int
+  uml_class   UMLClass    @relation(fields: [uml_classId], references: [id])
+  parameters  Parameter[]
+}
+
+model Parameter {
+  id       Int    @id @default(autoincrement())
+  name     String
+  type     String
+  methodId Int
+  method   Method @relation(fields: [methodId], references: [id])
+}
+
+model Position {
+  id          Int      @id @default(autoincrement())
+  x           Int
+  y           Int
+  uml_classId Int      @unique
+  UML_class   UMLClass @relation(fields: [uml_classId], references: [id])
+}
