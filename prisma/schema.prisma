@@ -25,7 +25,7 @@ model User {
 model Project {
   id              String    @id @default(cuid())
   project_name    String    @unique
-  project_snippet String?   
+  project_snippet String?
   user            User      @relation(fields: [userid], references: [id])
   userid          String
   created_at      DateTime  @default(now())
@@ -66,6 +66,7 @@ model UMLAssociation {
   shape       String
   source      Int
   target      Int
+  label       String?
   diagramId   String
   uml_diagram Diagram @relation(fields: [diagramId], references: [id])
 }
