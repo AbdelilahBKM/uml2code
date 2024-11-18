@@ -2,7 +2,6 @@
 import { useEffect } from 'react';
 import { Graph, Cell, ObjectExt } from '@antv/x6';
 import { Diagram } from '@/types/UMLClass.Type';
-import { Label } from '@radix-ui/react-label';
 export interface Dimension {
   width: number;
   height: number;
@@ -11,7 +10,8 @@ export interface Dimension {
 export const useGraphSetup = (
   containerRef: React.RefObject<HTMLDivElement>,
   diagram: Diagram,
-  dimension: Dimension
+  setDiagram: (newDiagram: Diagram) => void,
+  dimension: Dimension,
 ) => {
   function getRandomPosition(nodeWidth: number, nodeHeight: number) {
     const x = Math.random() * (dimension.width - nodeWidth);
@@ -260,6 +260,7 @@ export const useGraphSetup = (
         ] : [cls.name],
         attributes: cls.attributes.map((att) => `${att.visibility}${att.name}: ${att.type}`),
         methods: cls.methods.map((op) => `${op.visibility}${op.name}(): ${op.returnType}`),
+        position: cls.position
       }
     });
     const UMLAssociations = diagram.uml_association.map((ass) => {
@@ -275,13 +276,27 @@ export const useGraphSetup = (
     })
     const data = [...umlClasses, ...UMLAssociations];
     data.forEach((item: any) => {
+      console.log(item);
       if (edgeShapes.includes(item.shape)) {
         cells.push(graph.createEdge(item))
       } else {
         const node = graph.createNode(item);
-        if(!item.position){
-          item.position = getRandomPosition(node.size().width, node.size().height);
+        if(item.position.x == 0 && item.position.y == 0 ){
+          const position = getRandomPosition(node.size().width, node.size().height);
+          item.position = position;
           node.position(item.position);
+          
+          const umlClasses = diagram.uml_classes.map(
+            (cls) => {
+              if(cls.id == item.id){
+                cls.position = position;
+              }
+              return cls;
+            }
+          );
+
+          diagram.uml_classes = umlClasses;
+          setDiagram(diagram);
         }
         cells.push(graph.createNode(item))
       }
@@ -292,8 +307,12 @@ export const useGraphSetup = (
     return () => {
       resizeObserver.disconnect();
       graph.dispose();
-    };
-    // fetch('http://localhost:5000/classes')
+    };   
+  }, [containerRef, diagram]);
+};
+
+
+// fetch('http://localhost:5000/classes')
     //   .then((response) => response.json())
     //   .then((data) => {
     //     const cells: Cell[] = []
@@ -314,7 +333,3 @@ export const useGraphSetup = (
     //     graph.resetCells(cells)
     //     graph.zoomToFit({ padding: 10, maxScale: 1 })
     //   })
-
-   
-  }, [containerRef, diagram]);
-};

@@ -7,15 +7,14 @@ import { Diagram } from '@/types/UMLClass.Type';
 
 interface ICanvas {
   diagram: Diagram;
+  setDiagram: (newDiagram: Diagram) => void
 }
 
-export default function Canvas({ diagram }: ICanvas) {
+export default function Canvas({ diagram, setDiagram }: ICanvas) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // State to store the container's width and height
   const [dimensions, setDimensions] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
 
-  // Update dimensions when the component is mounted or resized
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
@@ -26,20 +25,16 @@ export default function Canvas({ diagram }: ICanvas) {
       }
     };
 
-    // Initial dimension setting
     updateDimensions();
 
-    // Add resize event listener to update dimensions on resize
     window.addEventListener('resize', updateDimensions);
 
-    // Clean up event listener on component unmount
     return () => {
       window.removeEventListener('resize', updateDimensions);
     };
   }, []);
 
-  // Pass dimensions to useGraphSetup when available
-  useGraphSetup(containerRef, diagram, dimensions);
+  useGraphSetup(containerRef, diagram, setDiagram, dimensions);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }
