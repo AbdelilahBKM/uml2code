@@ -57,20 +57,18 @@ export default function EditDiagram({ diagramId }: { diagramId: string }) {
 
   }, [classes, associations]);
 
-  return (
+  return !diagram ? null : (
     <div className="w-full h-screen flex">
       {/* Sidebar */}
       <section className="w-fit h-full py-5 px-2">
         <UMLClassCreator 
-        classes={classes} 
-        setClasses={setClasses} 
-        associations={associations} 
-        setAssociations={setAssociations} />
+        diagram={diagram}
+        setDiagram={setDiagram} />
       </section>
 
       {/* Main Content */}
       <section className="w-4/5 h-full">
-        {diagram && <Canvas diagram={diagram} setDiagram={setDiagram}  />}
+        <Canvas diagram={diagram} setDiagram={setDiagram}  />
       </section>
     </div>
   );

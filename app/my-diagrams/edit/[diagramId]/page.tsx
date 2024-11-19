@@ -1,6 +1,5 @@
 "use client"
 import EditDiagram from "@/components/editDiagram";
-import Dashboard from "@/components/MyDiagrams";
 import useAuth from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -34,20 +34,17 @@ import { Save, Code, CirclePlus } from 'lucide-react'
 import { UMLClass, UMLAssociation, Method, Attribute, Diagram } from '@/types/UMLClass.Type'
 
 interface UMLClassCreatorInterface {
-  classes: UMLClass[];
-  setClasses: (classes: UMLClass[]) => void;
-  associations: UMLAssociation[];
-  setAssociations: (associations: UMLAssociation[]) => void;
+  diagram: Diagram;
+  setDiagram: (newDiagram: Diagram) => void;
 }
 
 export default function UMLClassCreator(
   {
-    classes,
-    setClasses,
-    associations,
-    setAssociations
+    diagram,
+    setDiagram
 
   }: UMLClassCreatorInterface) {
+
   const [className, setClassName] = useState<string>('');
   const [classShape, setClassShape] = useState<string>('');
   const [sourceId, setSourceId] = useState<number>();
@@ -61,7 +58,22 @@ export default function UMLClassCreator(
   const [methodVisibility, setMethodVisibility] = useState<string>('');
   const [methodName, setMethodName] = useState<string>('');
   const [returnType, setReturnType] = useState<string>('');
+  const [classes, setClasses] = useState<UMLClass[]>([]);
+  const [associations, setAssociations] = useState<UMLAssociation[]>([]);
+  useEffect(() => {
+    setClasses(diagram.uml_classes);
+    setAssociations(diagram.uml_association);
+  }, []);
 
+  useEffect(() => {
+    const newObj: Diagram = {
+      id: diagram.id,
+      uml_classes: classes,
+      uml_association: associations
+    }
+    setDiagram(newObj);
+  }, [classes, associations]);
+  
   const addClass = () => {
     if (className && classShape) {
       const newClass: UMLClass = {
