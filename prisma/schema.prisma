@@ -39,7 +39,7 @@ model Diagram {
   uml_classes     UMLClass[]
   uml_association UMLAssociation[]
   projectId       String           @unique
-  project         Project          @relation(fields: [projectId], references: [id])
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model CodeBase {
@@ -47,7 +47,7 @@ model CodeBase {
   language  String
   code      String
   projectId String  @unique
-  project   Project @relation(fields: [projectId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model UMLClass {
@@ -58,7 +58,7 @@ model UMLClass {
   methods     Method[]
   position    Position?
   diagramId   String
-  uml_diagram Diagram     @relation(fields: [diagramId], references: [id])
+  uml_diagram Diagram     @relation(fields: [diagramId], references: [id], onDelete: Cascade)
 }
 
 model UMLAssociation {
@@ -68,7 +68,7 @@ model UMLAssociation {
   target      Int
   label       String?
   diagramId   String
-  uml_diagram Diagram @relation(fields: [diagramId], references: [id])
+  uml_diagram Diagram @relation(fields: [diagramId], references: [id], onDelete: Cascade)
 }
 
 model Attribute {
@@ -77,7 +77,7 @@ model Attribute {
   name        String
   type        String
   uml_classId Int
-  uml_class   UMLClass @relation(fields: [uml_classId], references: [id])
+  uml_class   UMLClass @relation(fields: [uml_classId], references: [id], onDelete: Cascade)
 }
 
 model Method {
@@ -86,7 +86,7 @@ model Method {
   name        String
   returnType  String
   uml_classId Int
-  uml_class   UMLClass    @relation(fields: [uml_classId], references: [id])
+  uml_class   UMLClass    @relation(fields: [uml_classId], references: [id], onDelete: Cascade)
   parameters  Parameter[]
 }
 
@@ -103,5 +103,5 @@ model Position {
   x           Int
   y           Int
   uml_classId Int      @unique
-  UML_class   UMLClass @relation(fields: [uml_classId], references: [id])
+  UML_class   UMLClass @relation(fields: [uml_classId], references: [id], onDelete: Cascade)
 }

@@ -117,6 +117,15 @@ export async function PUT(request: Request) {
         }
 
         for (const cls of diagram.uml_classes) {
+            const exists = await prisma.uMLClass.findUnique({
+                where: {id: cls.id}
+            });
+            if(exists) {
+                // ########################################################### //
+                // We Will Come back to this afterward when we allow the user //
+                // to edit add or delete attribute                           //
+                continue;
+            }
             const uml_cls = await prisma.uMLClass.create({
                 data: { name: cls.name, shape: cls.shape, diagramId: diagram.id },
             });
@@ -149,7 +158,15 @@ export async function PUT(request: Request) {
         }
 
 
-        await Promise.all(diagram.uml_association.map((ass) => {
+        await Promise.all(diagram.uml_association.map(async (ass) => {
+            const exists = await prisma.uMLAssociation.findUnique(
+                {
+                    where: {id: ass.id}
+                }
+            );
+            if(exists){
+                return;
+            }
             prisma.uMLAssociation.create({
                 data: {
                     shape: ass.shape,

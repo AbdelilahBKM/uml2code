@@ -36,12 +36,14 @@ import { UMLClass, UMLAssociation, Method, Attribute, Diagram } from '@/types/UM
 interface UMLClassCreatorInterface {
   diagram: Diagram;
   setDiagram: (newDiagram: Diagram) => void;
+  saveDiagramToDatabase: () => Promise<void>;
 }
 
 export default function UMLClassCreator(
   {
     diagram,
-    setDiagram
+    setDiagram,
+    saveDiagramToDatabase
 
   }: UMLClassCreatorInterface) {
 
@@ -405,7 +407,7 @@ export default function UMLClassCreator(
         </Tabs>
       </CardContent>
       <CardFooter className="flex justify-between gap-5">
-        <Button onClick={handleSaveChanges} className="flex items-center bg-slate-800 hover:bg-slate-700">
+        <Button onClick={saveDiagramToDatabase} className="flex items-center bg-slate-800 hover:bg-slate-700">
           <Save className="mr-2 h-4 w-4" />
           Save Changes
         </Button>
