@@ -51,24 +51,28 @@ model CodeBase {
 }
 
 model UMLClass {
-  id          Int         @id @default(autoincrement())
-  shape       String
-  name        String
-  attributes  Attribute[]
-  methods     Method[]
-  position    Position?
-  diagramId   String
-  uml_diagram Diagram     @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  id           Int              @id @default(autoincrement())
+  shape        String
+  name         String
+  attributes   Attribute[]
+  methods      Method[]
+  position     Position?
+  diagramId    String
+  uml_diagram  Diagram          @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  associations UMLAssociation[] @relation("SourceAssociations")
+  targets      UMLAssociation[] @relation("TargetAssociations")
 }
 
 model UMLAssociation {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   shape       String
-  source      Int
-  target      Int
+  sourceId    Int
+  targetId    Int
   label       String?
   diagramId   String
-  uml_diagram Diagram @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  uml_diagram Diagram  @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  source      UMLClass @relation("SourceAssociations", fields: [sourceId], references: [id])
+  target      UMLClass @relation("TargetAssociations", fields: [targetId], references: [id])
 }
 
 model Attribute {

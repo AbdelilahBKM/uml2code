@@ -1,33 +1,60 @@
 "use client"
 import UMLClassCreator from "@/components/AddClassCard";
 import Canvas from "@/components/Canvas";
-import { logout } from "@/store/authReducer";
 import { RootState } from "@/store/redux";
-import { UMLAssociation, UMLClass, Diagram } from "@/types/UMLClass.Type";
+import { Diagram } from "@/types/UMLClass.Type";
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import NotFound from "./notFound";
-import { AlertCircle, Terminal, X } from "lucide-react"
+import { AlertCircle, Terminal } from "lucide-react";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@/components/ui/alert"
+} from "@/components/ui/alert";
 
 export default function EditDiagram({ diagramId }: { diagramId: string }) {
   const token = useSelector((state: RootState) => state.auth.token);
-  const dispatch = useDispatch();
-  const [diagram, setDiagram] = useState<Diagram | null>(() => {
-    const savedDiagram = localStorage.getItem(`diagram-${diagramId}`);
-    return savedDiagram ? JSON.parse(savedDiagram) : null;
-  });
-  const [classes, setClasses] = useState<UMLClass[]>([]);
-  const [associations, setAssociations] = useState<UMLAssociation[]>([]);
+  const [diagram, setDiagram] = useState<Diagram | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  useEffect(() => {
+    const getDiagram = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/project/diagram?projectId=${diagramId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message);
+        }
+
+        setDiagram(result);
+      } catch (error: any) {
+        setErrorMessage(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    if (!diagram) {
+      getDiagram();
+    }
+  }, [diagramId, token]);
+
+
   const SaveDiagramToDatabase = async () => {
+    if (diagram?.uml_classes.length === 0) {
+      setErrorMessage("unable to update an empty diagram");
+      return;
+    }
     try {
       setIsLoading(true);
       setErrorMessage('');
@@ -40,90 +67,43 @@ export default function EditDiagram({ diagramId }: { diagramId: string }) {
         },
         body: JSON.stringify(diagram)
       });
-      const results: Diagram | any = await response.json();
+      const results = await response.json();
       if (!response.ok) {
         throw new Error("unable to update database", results.message);
       }
-      setSuccessMessage("Updated Successfully!");
-      setDiagram(results);
+      setSuccessMessage(results.message);
+      setDiagram(results.update);
+      console.log(results);
 
     } catch (error) {
       console.log(error);
       setErrorMessage("Unable to update diagram! please try again later");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    const getDiagram = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/project/diagram?projectId=${diagramId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const results = await response.json();
-        if (!response.ok) {
-          if (response.status == 401) {
-            dispatch(logout());
-          }
-          throw new Error(results.message);
-        }
-        setDiagram(results);
-        setClasses(results.uml_classes);
-        setAssociations(results.uml_association);
-
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    if (!diagram) {
-      getDiagram();
-    }
-  }, [diagramId]);
-
-  useEffect(() => {
-    if (diagram) {
-      const diagramObj: Diagram = {
-        id: diagram.id,
-        uml_classes: classes,
-        uml_association: associations,
-      }
-      setDiagram(diagramObj);
-    }
-  }, [classes, associations]);
-
-  useEffect(() => {
-    if (diagram) {
-      localStorage.setItem(`diagram-${diagramId}`, JSON.stringify(diagram));
-    }
-  }, [diagram, diagramId]);
-
-
-
-  return !diagram ? (isLoading ? null : <NotFound />) : (
+  return isLoading ? (
+    <div className="w-full h-screen flex items-center justify-center">
+      <div>Loading...</div>
+    </div>
+  ) : !diagram || (!diagram.uml_classes && !diagram.uml_association) ? (
+    <NotFound />
+  ) : (
     <div className="w-full h-screen flex">
       {/* Sidebar */}
       {errorMessage && (
-        <Alert variant="destructive" className="absolute w-fit top-2 right-5 bg-red-50">
+        <Alert onClick={() => setErrorMessage("")} variant="destructive" className="absolute w-fit top-2 right-5 bg-red-50 cursor-pointer">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {errorMessage}
-          </AlertDescription>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
       {successMessage && (
-        <Alert 
-        onClick={() => setSuccessMessage('')}
-        variant={"default"} className="absolute w-fit top-2 right-5 bg-white text-green-900 cursor-pointer z-20">
-          <AlertTitle className="flex"><Terminal className="h-4 w-4" />Sucess!</AlertTitle>
+        <Alert
+          onClick={() => setSuccessMessage('')}
+          variant={"default"} className="absolute w-fit top-2 right-5 bg-white text-green-900 cursor-pointer z-20">
+          <AlertTitle className="flex"><Terminal className="h-4 w-4" /> Success!</AlertTitle>
           <AlertDescription>
             {successMessage + " " + new Date().toLocaleString()}
           </AlertDescription>

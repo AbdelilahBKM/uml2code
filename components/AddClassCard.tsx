@@ -28,10 +28,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Save, Code, CirclePlus } from 'lucide-react'
+import { Save, Code, CirclePlus, ArrowLeftFromLine } from 'lucide-react'
 import { UMLClass, UMLAssociation, Method, Attribute, Diagram } from '@/types/UMLClass.Type'
+import { useRouter } from 'next/navigation'
 
 interface UMLClassCreatorInterface {
   diagram: Diagram;
@@ -62,20 +74,30 @@ export default function UMLClassCreator(
   const [returnType, setReturnType] = useState<string>('');
   const [classes, setClasses] = useState<UMLClass[]>([]);
   const [associations, setAssociations] = useState<UMLAssociation[]>([]);
+  const [aboutToLeave, setIsAboutToLeave] = useState(false);
+  const router = useRouter();
+
   useEffect(() => {
-    setClasses(diagram.uml_classes);
-    setAssociations(diagram.uml_association);
-  }, []);
+    if (
+      JSON.stringify(diagram.uml_classes) !== JSON.stringify(classes) ||
+      JSON.stringify(diagram.uml_association) !== JSON.stringify(associations)
+    ) {
+      setClasses(diagram.uml_classes);
+      setAssociations(diagram.uml_association);
+    }
+  }, [diagram]);
 
   useEffect(() => {
     const newObj: Diagram = {
       id: diagram.id,
       uml_classes: classes,
-      uml_association: associations
+      uml_association: associations,
+    };
+    if (JSON.stringify(diagram) !== JSON.stringify(newObj)) {
+      setDiagram(newObj);
     }
-    setDiagram(newObj);
   }, [classes, associations]);
-  
+
   const addClass = () => {
     if (className && classShape) {
       const newClass: UMLClass = {
@@ -168,18 +190,6 @@ export default function UMLClassCreator(
     setAssociations(associations.filter(a => a.id !== id))
   }
 
-  const handleSaveChanges = () => {
-    // Implement save functionality here
-    console.log('Saving changes:', { classes, associations })
-    // You could save to localStorage, send to a server, etc.
-  }
-
-  const handleConvertToCode = () => {
-    // Implement code conversion functionality here
-    console.log('Converting to code:', { classes, associations })
-    // You could generate code based on the UML diagram and display it in a modal or new page
-  }
-
   return (
     <Card className="w-full max-w-3xl min-h-[75vh]">
       <CardHeader>
@@ -266,8 +276,8 @@ export default function UMLClassCreator(
                     </div>
                     <ScrollArea className="h-20 mt-2">
                       <ul className="list-disc pl-4">
-                        {selectedClass.attributes.map((attr, index) => (
-                          <li key={index}>{`${attr.visibility} ${attr.name}: ${attr.type}`}</li>
+                        {selectedClass.attributes.map((attr) => (
+                          <li key={attr.id}>{`${attr.visibility} ${attr.name}: ${attr.type}`}</li>
                         ))}
                       </ul>
                     </ScrollArea>
@@ -363,7 +373,7 @@ export default function UMLClassCreator(
                           <SelectItem value="association">Association</SelectItem>
                           <SelectItem value="aggregation">Aggregation</SelectItem>
                           <SelectItem value="composition">Composition</SelectItem>
-                          <SelectItem value="implementation">Implementation</SelectItem>
+                          <SelectItem value="implement">Implementation</SelectItem>
                           <SelectItem value="extends">Generalization</SelectItem>
                         </SelectContent>
                       </Select>
@@ -406,15 +416,34 @@ export default function UMLClassCreator(
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex justify-between gap-5">
-        <Button onClick={saveDiagramToDatabase} className="flex items-center bg-slate-800 hover:bg-slate-700">
-          <Save className="mr-2 h-4 w-4" />
-          Save Changes
-        </Button>
-        <Button onClick={handleConvertToCode} className="flex items-center bg-slate-800 hover:bg-slate-700">
-          <Code className="mr-2 h-4 w-4" />
-          Convert to Code
-        </Button>
+      <CardFooter className="flex-col justify-between gap-5">
+        <div className='flex justify-between gap-2'>
+          <Button onClick={saveDiagramToDatabase} className="flex items-center bg-slate-800 hover:bg-slate-700">
+            <Save className="mr-2 h-4 w-4" />
+            Save Changes
+          </Button>
+          <Button onClick={() => { }} className="flex items-center bg-slate-800 hover:bg-slate-700">
+            <Code className="mr-2 h-4 w-4" />
+            Convert to Code
+          </Button>
+        </div>
+        <AlertDialog open={aboutToLeave}>
+          <AlertDialogTrigger asChild>
+            <Button onClick={() => setIsAboutToLeave(true)} variant="outline"><ArrowLeftFromLine /> Go Back</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Before you Leave! </AlertDialogTitle>
+              <AlertDialogDescription>
+                Make sure you don't have any unsaved changes.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setIsAboutToLeave(false)}>Stay here</AlertDialogCancel>
+              <AlertDialogAction onClick={() => router.push("/my-diagrams")}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   )

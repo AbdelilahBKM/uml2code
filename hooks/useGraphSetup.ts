@@ -10,7 +10,6 @@ export interface Dimension {
 export const useGraphSetup = (
   containerRef: React.RefObject<HTMLDivElement>,
   diagram: Diagram,
-  setDiagram: (newDiagram: Diagram) => void,
   dimension: Dimension,
 ) => {
   function getRandomPosition(nodeWidth: number, nodeHeight: number) {
@@ -260,9 +259,11 @@ export const useGraphSetup = (
         ] : [cls.name],
         attributes: cls.attributes.map((att) => `${att.visibility}${att.name}: ${att.type}`),
         methods: cls.methods.map((op) => `${op.visibility}${op.name}(): ${op.returnType}`),
-        position: cls.position
+        position: cls.position || {
+          x: Math.random() * (dimension.width - 160), y: Math.random() * (dimension.height - 80)
+        }
       }
-    });
+    })
     const UMLAssociations = diagram.uml_association.map((ass) => {
       return {
         id: ass.id,
@@ -276,60 +277,20 @@ export const useGraphSetup = (
     })
     const data = [...umlClasses, ...UMLAssociations];
     data.forEach((item: any) => {
-      console.log(item);
       if (edgeShapes.includes(item.shape)) {
-        cells.push(graph.createEdge(item))
+        cells.push(graph.createEdge(item));
       } else {
         const node = graph.createNode(item);
-        if(item.position.x == 0 && item.position.y == 0 ){
-          const position = getRandomPosition(node.size().width, node.size().height);
-          item.position = position;
-          node.position(item.position);
-          
-          const umlClasses = diagram.uml_classes.map(
-            (cls) => {
-              if(cls.id == item.id){
-                cls.position = position;
-              }
-              return cls;
-            }
-          );
-
-          diagram.uml_classes = umlClasses;
-          setDiagram(diagram);
-        }
-        cells.push(graph.createNode(item))
+        node.position(item.position.x, item.position.y); // Use the position passed from Canvas
+        cells.push(node);
       }
-    })
+    });
     graph.resetCells(cells)
     graph.zoomToFit({ padding: 10, maxScale: 1 })
 
     return () => {
       resizeObserver.disconnect();
       graph.dispose();
-    };   
-  }, [containerRef, diagram]);
+    };
+  }, [containerRef, diagram, dimension]);
 };
-
-
-// fetch('http://localhost:5000/classes')
-    //   .then((response) => response.json())
-    //   .then((data) => {
-    //     const cells: Cell[] = []
-    //     const edgeShapes = [
-    //       'extends',
-    //       'composition',
-    //       'implement',
-    //       'aggregation',
-    //       'association',
-    //     ]
-    //     data.forEach((item: any) => {
-    //       if (edgeShapes.includes(item.shape)) {
-    //         cells.push(graph.createEdge(item))
-    //       } else {
-    //         cells.push(graph.createNode(item))
-    //       }
-    //     })
-    //     graph.resetCells(cells)
-    //     graph.zoomToFit({ padding: 10, maxScale: 1 })
-    //   })
