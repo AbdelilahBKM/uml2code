@@ -268,8 +268,8 @@ export const useGraphSetup = (
       return {
         id: ass.id,
         shape: ass.shape,
-        source: ass.source,
-        target: ass.target,
+        source: ass.sourceId,
+        target: ass.targetId,
         ...(
           ass.label && { label: ass.label }
         )

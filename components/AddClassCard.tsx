@@ -164,8 +164,8 @@ export default function UMLClassCreator(
     if (targetId && sourceId && associationShape) {
       const newAssociation: UMLAssociation = {
         id: Number(Date.now().toString()),
-        source: sourceId,
-        target: targetId,
+        sourceId: sourceId,
+        targetId: targetId,
         shape: associationShape,
         label: multiplicity
 
@@ -180,7 +180,7 @@ export default function UMLClassCreator(
 
   const deleteClass = (id: number) => {
     setClasses(classes.filter(c => c.id !== id))
-    setAssociations(associations.filter(a => a.source !== id && a.target !== id))
+    setAssociations(associations.filter(a => a.sourceId !== id && a.targetId !== id))
     if (selectedClass?.id === id) {
       setSelectedClass(null)
     }
@@ -401,9 +401,9 @@ export default function UMLClassCreator(
                 {associations.map(association => (
                   <div key={association.id} className="flex justify-between items-center p-2 border-b">
                     <span>
-                      {classes.find(c => c.id === association.source)?.name}
+                      {classes.find(c => c.id === association.sourceId)?.name}
                       {' -> '}
-                      {classes.find(c => c.id === association.target)?.name}
+                      {classes.find(c => c.id === association.targetId)?.name}
                       {' ('}{association.shape}{')'}
                     </span>
                     <Button variant="destructive" size="sm" onClick={() => deleteAssociation(association.id)}>

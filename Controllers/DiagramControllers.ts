@@ -12,15 +12,16 @@ export async function fetchDiagram(request: Request, userId: string) {
     if (!projectId) {
         return { status: 400, body: { message: "Project ID is required" } };
     }
-    
+
     const project = await prisma.project.findUnique({
         where: { id: projectId },
         select: {
             userid: true,
             diagram: {
-                include: {
+                select: {
+                    id: true,
                     uml_classes: {
-                        select: {
+                        select: {   
                             id: true,
                             name: true,
                             shape: true,
@@ -29,8 +30,15 @@ export async function fetchDiagram(request: Request, userId: string) {
                             position: true
                         }
                     },
-                    uml_association: true,
-                    
+                    uml_association: {
+                        select: {
+                            id: true,
+                            shape: true,
+                            sourceId: true,
+                            targetId: true,
+                        }
+                    },
+
                 },
             },
         },
@@ -43,13 +51,14 @@ export async function fetchDiagram(request: Request, userId: string) {
     if (project.userid !== userId) {
         return { status: 403, body: { message: "Unauthorized to access project" } };
     }
-
-    return { status: 200, body: project.diagram };
+    const diagram = project.diagram;
+    console.log(diagram);
+    return { status: 200, body: diagram };
 }
 
 // =========================> Update <=================================
 export async function updateDiagram(request: Request, userId: string) {
-    console.log("==> Udating AT: " + new Date());
+    console.log("\n", "============> Udating AT: " + new Date() + "<===========================");
     const url = new URL(request.url);
     const projectId = url.searchParams.get("projectId");
     if (!projectId) {
@@ -58,9 +67,8 @@ export async function updateDiagram(request: Request, userId: string) {
 
     const project = await prisma.project.findUnique({
         where: { id: projectId },
-        select: { userid: true },
+        select: { userid: true, diagram: true },
     });
-
     if (!project) {
         return { status: 404, body: { message: "Project not found" } };
     }
@@ -68,16 +76,16 @@ export async function updateDiagram(request: Request, userId: string) {
     if (project.userid !== userId) {
         return { status: 403, body: { message: "Unauthorized to access project" } };
     }
-
+    const DiagramId = project?.diagram?.id;
     const diagram: Diagram = await request.json();
     if (!diagram) {
         return { status: 400, body: { message: "Diagram is required" } };
     }
-
+    console.log("Diagram ===>", diagram);
     // =====> UML CLASSES:
     const uml_classes: ExtensionClass[] = diagram.uml_classes;
-    console.log(uml_classes);
-    
+    const uml_association = diagram.uml_association;
+
     const existingClasses = await prisma.uMLClass.findMany({
         where: { id: { in: uml_classes.map(cls => cls.id) } },
         include: { attributes: true, methods: true },
@@ -155,7 +163,7 @@ export async function updateDiagram(request: Request, userId: string) {
             );
         } else {
             const uml_cls = await prisma.uMLClass.create({
-                data: { name: cls.name, shape: cls.shape, diagramId: diagram.id },
+                data: { name: cls.name, shape: cls.shape, diagramId: DiagramId!},
             });
             cls.associated_id = uml_cls.id;
 
@@ -201,13 +209,13 @@ export async function updateDiagram(request: Request, userId: string) {
             if (exists) {
                 return;
             }
-            const sourceClassID = uml_classes.find((cls) => cls.id === ass.source)?.associated_id;
-            const targetClassID = uml_classes.find((cls) => cls.id === ass.target)?.associated_id;
+            const sourceClassID = uml_classes.find((cls) => cls.id === ass.sourceId)?.associated_id;
+            const targetClassID = uml_classes.find((cls) => cls.id === ass.targetId)?.associated_id;
             const sourceClass = await prisma.uMLClass.findUnique({
-                where: {id: sourceClassID}
+                where: { id: sourceClassID }
             })
             const targetClass = await prisma.uMLClass.findUnique({
-                where: {id: targetClassID}
+                where: { id: targetClassID }
             });
 
             if (!sourceClass || !targetClass) {
@@ -220,7 +228,7 @@ export async function updateDiagram(request: Request, userId: string) {
                     shape: ass.shape,
                     sourceId: sourceClass.id,
                     targetId: targetClass.id,
-                    diagramId: diagram.id
+                    diagramId: DiagramId!
                 },
             });
         })
@@ -228,14 +236,22 @@ export async function updateDiagram(request: Request, userId: string) {
 
     const AllClasses = await prisma.uMLClass.findMany({
         where: {
-            diagramId: diagram.id,
+            diagramId: DiagramId!,
         },
     });
-    
+
+    const AllAssociations = await prisma.uMLAssociation.findMany({
+        where: {
+            diagramId: DiagramId!
+        }
+    });
+
     const classesToDelete = AllClasses.filter(
-        (cls) => !uml_classes.some((newClass) => newClass.associated_id === cls.id)
+        (cls) => !uml_classes.some((ittClass) => ittClass.associated_id === cls.id)
     );
-    
+    const associationsToDelete = AllAssociations.filter(
+        (ass) => !uml_association.some((ittAssoc) => ittAssoc.id === ass.id)
+    );
     await Promise.all(
         classesToDelete.map((cls) =>
             prisma.uMLClass.delete({
@@ -243,9 +259,20 @@ export async function updateDiagram(request: Request, userId: string) {
             })
         )
     );
-    
+
+    await Promise.all(
+        associationsToDelete.map((ass) =>
+            prisma.uMLAssociation.delete({
+                where: { id: ass.id },
+            })
+        )
+    )
+
+
+
+
     const updatedDiagram = await prisma.diagram.findUnique({
-        where: {id: diagram.id},
+        where: { id: DiagramId! },
         select: {
             uml_classes: {
                 select: {
@@ -262,8 +289,8 @@ export async function updateDiagram(request: Request, userId: string) {
         }
     });
 
-    
-    return { status: 201, body: { message: "Diagram updated successfully", update: updatedDiagram} };
+
+    return { status: 201, body: { message: "Diagram updated successfully", update: updatedDiagram } };
 }
 
 

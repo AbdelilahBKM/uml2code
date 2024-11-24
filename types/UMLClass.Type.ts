@@ -35,8 +35,8 @@ export interface Parameter {
 }
 
 export interface UMLAssociation extends UMLObject {
-    source: number;
-    target: number;
+    sourceId: number;
+    targetId: number;
     label?: string;
 }
 
