@@ -1,8 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { Diagram, UMLClass } from "@/types/UMLClass.Type";
+import { Diagram, UMLClass, UMLAssociation } from "@/types/UMLClass.Type";
 import { Target } from "lucide-react";
 
 interface ExtensionClass extends UMLClass {
+    associated_id?: number;
+}
+
+interface ExtensionAssociations extends UMLAssociation {
     associated_id?: number;
 }
 
@@ -21,7 +25,7 @@ export async function fetchDiagram(request: Request, userId: string) {
                 select: {
                     id: true,
                     uml_classes: {
-                        select: {   
+                        select: {
                             id: true,
                             name: true,
                             shape: true,
@@ -84,7 +88,7 @@ export async function updateDiagram(request: Request, userId: string) {
     console.log("Diagram ===>", diagram);
     // =====> UML CLASSES:
     const uml_classes: ExtensionClass[] = diagram.uml_classes;
-    const uml_association = diagram.uml_association;
+    const uml_association: ExtensionAssociations[] = diagram.uml_association;
 
     const existingClasses = await prisma.uMLClass.findMany({
         where: { id: { in: uml_classes.map(cls => cls.id) } },
@@ -163,7 +167,7 @@ export async function updateDiagram(request: Request, userId: string) {
             );
         } else {
             const uml_cls = await prisma.uMLClass.create({
-                data: { name: cls.name, shape: cls.shape, diagramId: DiagramId!},
+                data: { name: cls.name, shape: cls.shape, diagramId: DiagramId! },
             });
             cls.associated_id = uml_cls.id;
 
@@ -201,12 +205,14 @@ export async function updateDiagram(request: Request, userId: string) {
 
     // =====> UML ASSOCIATIONS:
     await Promise.all(
-        diagram.uml_association.map(async (ass) => {
+        uml_association.map(async (ass) => {
             const exists = await prisma.uMLAssociation.findUnique({
                 where: { id: ass.id },
             });
 
             if (exists) {
+                console.log("association already exist", exists);
+                ass.associated_id = exists.id;
                 return;
             }
             const sourceClassID = uml_classes.find((cls) => cls.id === ass.sourceId)?.associated_id;
@@ -223,14 +229,16 @@ export async function updateDiagram(request: Request, userId: string) {
                 return { body: { message: 'Invalid Association', association: ass }, status: 500 };
             }
 
-            await prisma.uMLAssociation.create({
+            const newAss = await prisma.uMLAssociation.create({
                 data: {
                     shape: ass.shape,
                     sourceId: sourceClass.id,
                     targetId: targetClass.id,
+                    label: ass.label || null,
                     diagramId: DiagramId!
                 },
             });
+            ass.associated_id = newAss.id;
         })
     );
 
@@ -249,9 +257,11 @@ export async function updateDiagram(request: Request, userId: string) {
     const classesToDelete = AllClasses.filter(
         (cls) => !uml_classes.some((ittClass) => ittClass.associated_id === cls.id)
     );
+    
     const associationsToDelete = AllAssociations.filter(
-        (ass) => !uml_association.some((ittAssoc) => ittAssoc.id === ass.id)
+        (ass) => !uml_association.some((ittAssoc) => ittAssoc.associated_id === ass.id)
     );
+
     await Promise.all(
         classesToDelete.map((cls) =>
             prisma.uMLClass.delete({
@@ -267,9 +277,6 @@ export async function updateDiagram(request: Request, userId: string) {
             })
         )
     )
-
-
-
 
     const updatedDiagram = await prisma.diagram.findUnique({
         where: { id: DiagramId! },
