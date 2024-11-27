@@ -25,7 +25,7 @@ model User {
 model Project {
   id              String    @id @default(cuid())
   project_name    String    @unique
-  project_snippet String?   
+  project_snippet String?
   user            User      @relation(fields: [userid], references: [id])
   userid          String
   created_at      DateTime  @default(now())
@@ -39,7 +39,7 @@ model Diagram {
   uml_classes     UMLClass[]
   uml_association UMLAssociation[]
   projectId       String           @unique
-  project         Project          @relation(fields: [projectId], references: [id])
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model CodeBase {
@@ -47,27 +47,32 @@ model CodeBase {
   language  String
   code      String
   projectId String  @unique
-  project   Project @relation(fields: [projectId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model UMLClass {
-  id          Int         @id @default(autoincrement())
-  shape       String
-  name        String
-  attributes  Attribute[]
-  methods     Method[]
-  position    Position?
-  diagramId   String
-  uml_diagram Diagram     @relation(fields: [diagramId], references: [id])
+  id           Int              @id @default(autoincrement())
+  shape        String
+  name         String
+  attributes   Attribute[]
+  methods      Method[]
+  position     Position?
+  diagramId    String
+  uml_diagram  Diagram          @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  associations UMLAssociation[] @relation("SourceAssociations")
+  targets      UMLAssociation[] @relation("TargetAssociations")
 }
 
 model UMLAssociation {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   shape       String
-  source      Int
-  target      Int
+  sourceId    Int
+  targetId    Int
+  label       String?
   diagramId   String
-  uml_diagram Diagram @relation(fields: [diagramId], references: [id])
+  uml_diagram Diagram  @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  source      UMLClass @relation("SourceAssociations", fields: [sourceId], references: [id])
+  target      UMLClass @relation("TargetAssociations", fields: [targetId], references: [id])
 }
 
 model Attribute {
@@ -76,7 +81,7 @@ model Attribute {
   name        String
   type        String
   uml_classId Int
-  uml_class   UMLClass @relation(fields: [uml_classId], references: [id])
+  uml_class   UMLClass @relation(fields: [uml_classId], references: [id], onDelete: Cascade)
 }
 
 model Method {
@@ -85,7 +90,7 @@ model Method {
   name        String
   returnType  String
   uml_classId Int
-  uml_class   UMLClass    @relation(fields: [uml_classId], references: [id])
+  uml_class   UMLClass    @relation(fields: [uml_classId], references: [id], onDelete: Cascade)
   parameters  Parameter[]
 }
 
@@ -102,5 +107,5 @@ model Position {
   x           Int
   y           Int
   uml_classId Int      @unique
-  UML_class   UMLClass @relation(fields: [uml_classId], references: [id])
+  UML_class   UMLClass @relation(fields: [uml_classId], references: [id], onDelete: Cascade)
 }

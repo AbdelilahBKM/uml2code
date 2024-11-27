@@ -1,8 +1,22 @@
 // useGraphSetup.ts
 import { useEffect } from 'react';
 import { Graph, Cell, ObjectExt } from '@antv/x6';
+import { Diagram } from '@/types/UMLClass.Type';
+export interface Dimension {
+  width: number;
+  height: number;
+}
 
-export const useGraphSetup = (containerRef: React.RefObject<HTMLDivElement>) => {
+export const useGraphSetup = (
+  containerRef: React.RefObject<HTMLDivElement>,
+  diagram: Diagram,
+  dimension: Dimension,
+) => {
+  function getRandomPosition(nodeWidth: number, nodeHeight: number) {
+    const x = Math.random() * (dimension.width - nodeWidth);
+    const y = Math.random() * (dimension.height - nodeHeight);
+    return { x, y };
+  }
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -99,29 +113,118 @@ export const useGraphSetup = (containerRef: React.RefObject<HTMLDivElement>) => 
       true,
     );
 
-    // Register edges (extends, implements, composition, aggregation, and association)
-    const edgeShapes = ['extends', 'composition', 'implement', 'aggregation', 'association'];
-
-    edgeShapes.forEach((shape) => {
-      Graph.registerEdge(
-        shape,
-        {
-          inherit: 'edge',
-          attrs: {
-            line: {
-              strokeWidth: 1,
-              targetMarker: {
-                name: 'path',
-                d: 'M 20 0 L 0 10 L 20 20 z',
-                fill: 'white',
-                offsetX: -10,
-              },
+    Graph.registerEdge(
+      'extends',
+      {
+        inherit: 'edge',
+        attrs: {
+          line: {
+            strokeWidth: 1,
+            targetMarker: {
+              name: 'path',
+              d: 'M 20 0 L 0 10 L 20 20 z',
+              fill: 'white',
+              offsetX: -10,
             },
           },
         },
-        true,
-      );
-    });
+      },
+      true,
+    )
+
+    // 实现
+    Graph.registerEdge(
+      'implement',
+      {
+        inherit: 'edge',
+        attrs: {
+          line: {
+            strokeWidth: 1,
+            strokeDasharray: '3,3',
+            targetMarker: {
+              name: 'path',
+              d: 'M 20 0 L 0 10 L 20 20 z',
+              fill: 'white',
+              offsetX: -10,
+            },
+          },
+        },
+      },
+      true,
+    )
+
+    // 组合
+    Graph.registerEdge(
+      'composition',
+      {
+        inherit: 'edge',
+        attrs: {
+          line: {
+            strokeWidth: 1,
+            sourceMarker: {
+              name: 'path',
+              d: 'M 30 10 L 20 16 L 10 10 L 20 4 z',
+              fill: 'black',
+              offsetX: -10,
+            },
+            targetMarker: {
+              name: 'path',
+              d: 'M 6 10 L 18 4 C 14.3333 6 10.6667 8 7 10 L 18 16 z',
+              fill: 'black',
+              offsetX: -5,
+            },
+          },
+        },
+      },
+      true,
+    )
+
+    // 聚合
+    Graph.registerEdge(
+      'aggregation',
+      {
+        inherit: 'edge',
+        attrs: {
+          line: {
+            strokeWidth: 1,
+            sourceMarker: {
+              name: 'path',
+              d: 'M 30 10 L 20 16 L 10 10 L 20 4 z',
+              fill: 'white',
+              offsetX: -10,
+            },
+            targetMarker: {
+              name: 'path',
+              d: 'M 6 10 L 18 4 C 14.3333 6 10.6667 8 7 10 L 18 16 z',
+              fill: 'black',
+              offsetX: -5,
+            },
+          },
+        },
+      },
+      true,
+    )
+
+    // 关联
+    Graph.registerEdge(
+      'association',
+      {
+        inherit: 'edge',
+        attrs: {
+          line: {
+            strokeWidth: 1,
+            targetMarker: {
+              name: 'path',
+              d: 'M 6 10 L 18 4 C 14.3333 6 10.6667 8 7 10 L 18 16 z',
+              fill: 'black',
+              offsetX: -5,
+            },
+          },
+        },
+      },
+      true,
+    )
+    // #endregion
 
     // Initialize the graph
     const graph = new Graph({
@@ -137,25 +240,57 @@ export const useGraphSetup = (containerRef: React.RefObject<HTMLDivElement>) => 
     resizeObserver.observe(containerRef.current);
 
     // Load initial nodes and edges
-    fetch('')
-      .then((response) => response.json())
-      .then((data) => {
-        const cells: Cell[] = [];
-        data.forEach((item: any) => {
-          if (edgeShapes.includes(item.shape)) {
-            cells.push(graph.createEdge(item));
-          } else {
-            cells.push(graph.createNode(item));
-          }
-        });
+    const cells: Cell[] = []
+    const edgeShapes = [
+      'extends',
+      'composition',
+      'implement',
+      'aggregation',
+      'association',
+    ]
 
-        graph.resetCells(cells);
-        graph.zoomToFit({ padding: 10, maxScale: 1 });
-      });
+    const umlClasses = diagram.uml_classes.map((cls) => {
+      return {
+        id: cls.id,
+        shape: "class",
+        name: cls.shape !== "class" ? [
+          `<<${cls.shape}>>`,
+          cls.name
+        ] : [cls.name],
+        attributes: cls.attributes.map((att) => `${att.visibility}${att.name}: ${att.type}`),
+        methods: cls.methods.map((op) => `${op.visibility}${op.name}(): ${op.returnType}`),
+        position: cls.position || {
+          x: Math.random() * (dimension.width - 160), y: Math.random() * (dimension.height - 80)
+        }
+      }
+    })
+    const UMLAssociations = diagram.uml_association.map((ass) => {
+      return {
+        id: ass.id,
+        shape: ass.shape,
+        source: ass.sourceId,
+        target: ass.targetId,
+        ...(
+          ass.label && { label: ass.label }
+        )
+      }
+    })
+    const data = [...umlClasses, ...UMLAssociations];
+    data.forEach((item: any) => {
+      if (edgeShapes.includes(item.shape)) {
+        cells.push(graph.createEdge(item));
+      } else {
+        const node = graph.createNode(item);
+        node.position(item.position.x, item.position.y); // Use the position passed from Canvas
+        cells.push(node);
+      }
+    });
+    graph.resetCells(cells)
+    graph.zoomToFit({ padding: 10, maxScale: 1 })
 
     return () => {
       resizeObserver.disconnect();
       graph.dispose();
     };
-  }, [containerRef]);
+  }, [containerRef, diagram, dimension]);
 };

@@ -1,28 +1,43 @@
 interface UMLObject {
     id: number;
-    shape: 
-    "class" | 
-    "extends" | 
-    "composition" | 
-    "aggregation" | 
-    "association" |
-    "implement" |
-    "interface";
+    shape: string
 }
 
 export interface UMLClass extends UMLObject {
-    name: string[];
-    attributes: string[];
-    methods: string[];
+    name: string;
+    attributes: Attribute[];
+    methods: Method[];
     position: {
         x: number,
         y: number
     }
 }
 
+export interface Attribute {
+    id: number;
+    visibility: string;
+    name: string;
+    type: string;
+}
+
+export interface Method {
+    id: number;
+    visibility: string;
+    name: string;
+    returnType: string;
+    parameters: Parameter[];
+}
+
+export interface Parameter {
+    id: number;
+    name: string;
+    type: string;
+}
+
 export interface UMLAssociation extends UMLObject {
-    source: number;
-    target: number;
+    sourceId: number;
+    targetId: number;
+    label?: string;
 }
 
 export interface Diagram {
