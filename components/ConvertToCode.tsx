@@ -247,8 +247,8 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
 
         pythonCode += abstractDecorator;
         pythonCode += `    def ${method.name}(self${
-          method.parameters.length > 0
-            ? ", " + method.parameters.map((p) => p.name).join(", ")
+          (method.parameters || []).length > 0
+            ? ", " + (method.parameters || []).map((p) => p.name).join(", ")
             : ""
         }):\n`;
 
@@ -409,8 +409,10 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
             : "protected";
 
         const params =
-          method.parameters.length > 0
-            ? method.parameters.map((p) => `${p.type} ${p.name}`).join(", ")
+          (method.parameters || []).length > 0
+            ? (method.parameters || [])
+                .map((p) => `${p.type} ${p.name}`)
+                .join(", ")
             : "";
 
         javaCode += `    ${visibility} ${method.returnType} ${method.name}(${params}) {\n`;
@@ -581,8 +583,10 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
             : "protected";
 
         const params =
-          method.parameters.length > 0
-            ? method.parameters.map((p) => `$${p.name}`).join(", ")
+          (method.parameters || []).length > 0
+            ? (method.parameters || [])
+                .map((p) => `${p.type} ${p.name}`)
+                .join(", ")
             : "";
 
         phpCode += `    ${visibility} function ${method.name}(${params}) {\n`;
