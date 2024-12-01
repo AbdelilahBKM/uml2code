@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,16 +9,16 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,40 +38,45 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Save, Code, CirclePlus, ArrowLeftFromLine } from 'lucide-react'
-import { UMLClass, UMLAssociation, Method, Attribute, Diagram } from '@/types/UMLClass.Type'
-import { useRouter } from 'next/navigation'
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Save, Code, CirclePlus, ArrowLeftFromLine, Link } from "lucide-react";
+import {
+  UMLClass,
+  UMLAssociation,
+  Method,
+  Attribute,
+  Diagram,
+} from "@/types/UMLClass.Type";
+import { useRouter } from "next/navigation";
 
 interface UMLClassCreatorInterface {
   diagram: Diagram;
   setDiagram: (newDiagram: Diagram) => void;
   saveDiagramToDatabase: () => Promise<void>;
+  handleNavigation: () => void;
 }
 
-export default function UMLClassCreator(
-  {
-    diagram,
-    setDiagram,
-    saveDiagramToDatabase
-
-  }: UMLClassCreatorInterface) {
-
-  const [className, setClassName] = useState<string>('');
-  const [classShape, setClassShape] = useState<string>('');
+export default function UMLClassCreator({
+  diagram,
+  setDiagram,
+  saveDiagramToDatabase,
+  handleNavigation,
+}: UMLClassCreatorInterface) {
+  const [className, setClassName] = useState<string>("");
+  const [classShape, setClassShape] = useState<string>("");
   const [sourceId, setSourceId] = useState<number>();
   const [targetId, setTargetId] = useState<number>();
-  const [multiplicity, setMultiplicity] = useState<string>('');
+  const [multiplicity, setMultiplicity] = useState<string>("");
   const [associationShape, setAssShape] = useState<string>();
   const [selectedClass, setSelectedClass] = useState<UMLClass | null>(null);
-  const [attVisibility, setAttVisibility] = useState<string>('');
-  const [attName, setAttName] = useState<string>('');
-  const [attType, setAttType] = useState<string>('');
-  const [methodVisibility, setMethodVisibility] = useState<string>('');
-  const [methodName, setMethodName] = useState<string>('');
-  const [returnType, setReturnType] = useState<string>('');
+  const [attVisibility, setAttVisibility] = useState<string>("");
+  const [attName, setAttName] = useState<string>("");
+  const [attType, setAttType] = useState<string>("");
+  const [methodVisibility, setMethodVisibility] = useState<string>("");
+  const [methodName, setMethodName] = useState<string>("");
+  const [returnType, setReturnType] = useState<string>("");
   const [classes, setClasses] = useState<UMLClass[]>([]);
   const [associations, setAssociations] = useState<UMLAssociation[]>([]);
   const [aboutToLeave, setIsAboutToLeave] = useState(false);
@@ -108,15 +113,15 @@ export default function UMLClassCreator(
         methods: [],
         position: {
           x: 0,
-          y: 0
-        }
-      }
-      setClasses([...classes, newClass])
-      setSelectedClass(newClass)
-      setClassName('')
-      setClassShape('')
+          y: 0,
+        },
+      };
+      setClasses([...classes, newClass]);
+      setSelectedClass(newClass);
+      setClassName("");
+      setClassShape("");
     }
-  }
+  };
 
   const addAttribute = () => {
     if (selectedClass && attName && attType && attVisibility) {
@@ -124,20 +129,22 @@ export default function UMLClassCreator(
         id: Number(Date.now()),
         name: attName,
         visibility: attVisibility,
-        type: attType
-      }
+        type: attType,
+      };
 
       const updatedClass = {
         ...selectedClass,
-        attributes: [...selectedClass.attributes, attribute]
-      }
-      setClasses(classes.map(c => c.id === selectedClass.id ? updatedClass : c))
-      setSelectedClass(updatedClass)
-      setAttName('')
-      setAttVisibility('')
-      setAttType('')
+        attributes: [...selectedClass.attributes, attribute],
+      };
+      setClasses(
+        classes.map((c) => (c.id === selectedClass.id ? updatedClass : c))
+      );
+      setSelectedClass(updatedClass);
+      setAttName("");
+      setAttVisibility("");
+      setAttType("");
     }
-  }
+  };
 
   const addMethod = () => {
     if (selectedClass && methodName && returnType && methodVisibility) {
@@ -146,19 +153,21 @@ export default function UMLClassCreator(
         name: methodName,
         returnType: returnType,
         visibility: methodVisibility,
-        parameters: []
-      }
+        parameters: [],
+      };
       const updatedClass = {
         ...selectedClass,
-        methods: [...selectedClass.methods, method]
-      }
-      setClasses(classes.map(c => c.id === selectedClass.id ? updatedClass : c))
-      setSelectedClass(updatedClass)
-      setMethodName('')
-      setReturnType('')
-      setMethodVisibility('')
+        methods: [...selectedClass.methods, method],
+      };
+      setClasses(
+        classes.map((c) => (c.id === selectedClass.id ? updatedClass : c))
+      );
+      setSelectedClass(updatedClass);
+      setMethodName("");
+      setReturnType("");
+      setMethodVisibility("");
     }
-  }
+  };
 
   const addAssociation = () => {
     if (targetId && sourceId && associationShape) {
@@ -167,34 +176,37 @@ export default function UMLClassCreator(
         sourceId: sourceId,
         targetId: targetId,
         shape: associationShape,
-        label: multiplicity
-
-      }
-      setAssociations([...associations, newAssociation])
+        label: multiplicity,
+      };
+      setAssociations([...associations, newAssociation]);
     }
-    setSourceId(0)
-    setTargetId(0)
-    setAssShape('')
-    setMultiplicity('')
-  }
+    setSourceId(0);
+    setTargetId(0);
+    setAssShape("");
+    setMultiplicity("");
+  };
 
   const deleteClass = (id: number) => {
-    setClasses(classes.filter(c => c.id !== id))
-    setAssociations(associations.filter(a => a.sourceId !== id && a.targetId !== id))
+    setClasses(classes.filter((c) => c.id !== id));
+    setAssociations(
+      associations.filter((a) => a.sourceId !== id && a.targetId !== id)
+    );
     if (selectedClass?.id === id) {
-      setSelectedClass(null)
+      setSelectedClass(null);
     }
-  }
+  };
 
   const deleteAssociation = (id: number) => {
-    setAssociations(associations.filter(a => a.id !== id))
-  }
+    setAssociations(associations.filter((a) => a.id !== id));
+  };
 
   return (
     <Card className="w-full max-w-3xl min-h-[75vh]">
       <CardHeader>
         <CardTitle>UML Class Diagram Creator</CardTitle>
-        <CardDescription>Create and manage UML classes and associations</CardDescription>
+        <CardDescription>
+          Create and manage UML classes and associations
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="addClass">
@@ -211,11 +223,15 @@ export default function UMLClassCreator(
                   <Input
                     value={className}
                     onChange={(e) => setClassName(e.target.value)}
-                    id="className" placeholder="Enter class name" />
+                    id="className"
+                    placeholder="Enter class name"
+                  />
                 </div>
                 <div className="flex flex-col space-y-1.5">
                   <Label htmlFor="classType">Class Type</Label>
-                  <Select onValueChange={(value) => setClassShape(value.toString())}>
+                  <Select
+                    onValueChange={(value) => setClassShape(value.toString())}
+                  >
                     <SelectTrigger id="classType">
                       <SelectValue placeholder="Select class type" />
                     </SelectTrigger>
@@ -234,13 +250,21 @@ export default function UMLClassCreator(
           </TabsContent>
           <TabsContent value="manageClass">
             <div className="space-y-4 mt-4">
-              <Select onValueChange={(value) => setSelectedClass(classes.find(c => c.id === Number(value)) || null)}>
+              <Select
+                onValueChange={(value) =>
+                  setSelectedClass(
+                    classes.find((c) => c.id === Number(value)) || null
+                  )
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a class to manage" />
                 </SelectTrigger>
                 <SelectContent>
-                  {classes.map(c => (
-                    <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                  {classes.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -249,18 +273,26 @@ export default function UMLClassCreator(
                   <div>
                     <Label htmlFor="attributes">Attributes</Label>
                     <div className="flex space-x-2 mt-1">
-                      <Select onValueChange={(value) => setAttVisibility(value)}>
-                        <SelectTrigger className='w-1/3' >
+                      <Select
+                        onValueChange={(value) => setAttVisibility(value)}
+                      >
+                        <SelectTrigger className="w-1/3">
                           <SelectValue placeholder="Visibility" />
                         </SelectTrigger>
-                        <SelectContent >
-                          <SelectItem key={"+"} value={"+"} >&#43;</SelectItem>
-                          <SelectItem key={"-"} value={"-"} >&#45;</SelectItem>
-                          <SelectItem key={"#"} value={"#"} >&#35;</SelectItem>
+                        <SelectContent>
+                          <SelectItem key={"+"} value={"+"}>
+                            &#43;
+                          </SelectItem>
+                          <SelectItem key={"-"} value={"-"}>
+                            &#45;
+                          </SelectItem>
+                          <SelectItem key={"#"} value={"#"}>
+                            &#35;
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <Input
-                        className='w-1/3'
+                        className="w-1/3"
                         id="att-type"
                         value={attType}
                         onChange={(e) => setAttType(e.target.value)}
@@ -277,7 +309,9 @@ export default function UMLClassCreator(
                     <ScrollArea className="h-20 mt-2">
                       <ul className="list-disc pl-4">
                         {selectedClass.attributes.map((attr) => (
-                          <li key={attr.id}>{`${attr.visibility} ${attr.name}: ${attr.type}`}</li>
+                          <li
+                            key={attr.id}
+                          >{`${attr.visibility} ${attr.name}: ${attr.type}`}</li>
                         ))}
                       </ul>
                     </ScrollArea>
@@ -285,18 +319,26 @@ export default function UMLClassCreator(
                   <div>
                     <Label htmlFor="methods">Methods</Label>
                     <div className="flex space-x-2 mt-1">
-                      <Select onValueChange={(value) => setMethodVisibility(value)}>
-                        <SelectTrigger className='w-1/3' >
+                      <Select
+                        onValueChange={(value) => setMethodVisibility(value)}
+                      >
+                        <SelectTrigger className="w-1/3">
                           <SelectValue placeholder="Visibility" />
                         </SelectTrigger>
-                        <SelectContent >
-                          <SelectItem key={"+"} value={"+"} >&#43;</SelectItem>
-                          <SelectItem key={"-"} value={"-"} >&#45;</SelectItem>
-                          <SelectItem key={"#"} value={"#"} >&#35;</SelectItem>
+                        <SelectContent>
+                          <SelectItem key={"+"} value={"+"}>
+                            &#43;
+                          </SelectItem>
+                          <SelectItem key={"-"} value={"-"}>
+                            &#45;
+                          </SelectItem>
+                          <SelectItem key={"#"} value={"#"}>
+                            &#35;
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <Input
-                        className='w-1/3'
+                        className="w-1/3"
                         id="returnType"
                         value={returnType}
                         onChange={(e) => setReturnType(e.target.value)}
@@ -313,12 +355,17 @@ export default function UMLClassCreator(
                     <ScrollArea className="h-20 mt-2">
                       <ul className="list-disc pl-4">
                         {selectedClass.methods.map((method, index) => (
-                          <li key={index}>{`${method.visibility} ${method.name}(): ${method.returnType}`}</li>
+                          <li
+                            key={index}
+                          >{`${method.visibility} ${method.name}(): ${method.returnType}`}</li>
                         ))}
                       </ul>
                     </ScrollArea>
                   </div>
-                  <Button variant="destructive" onClick={() => deleteClass(selectedClass.id)}>
+                  <Button
+                    variant="destructive"
+                    onClick={() => deleteClass(selectedClass.id)}
+                  >
                     Delete Class
                   </Button>
                 </div>
@@ -334,54 +381,94 @@ export default function UMLClassCreator(
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Add Association</DialogTitle>
-                    <DialogDescription>Create a new association between two classes.</DialogDescription>
+                    <DialogDescription>
+                      Create a new association between two classes.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="sourceClass" className="text-right">Source</Label>
-                      <Select onValueChange={(value) => setSourceId(Number(value))}>
-                        <SelectTrigger className='col-span-3' id="sourceClass">
+                      <Label htmlFor="sourceClass" className="text-right">
+                        Source
+                      </Label>
+                      <Select
+                        onValueChange={(value) => setSourceId(Number(value))}
+                      >
+                        <SelectTrigger className="col-span-3" id="sourceClass">
                           <SelectValue placeholder="Select source class" />
                         </SelectTrigger>
                         <SelectContent>
-                          {classes.map(c => (
-                            <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                          {classes.map((c) => (
+                            <SelectItem key={c.id} value={c.id.toString()}>
+                              {c.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="targetClass" className="text-right">Target</Label>
-                      <Select onValueChange={(value) => setTargetId(Number(value))}>
-                        <SelectTrigger className='col-span-3' id="targetClass">
+                      <Label htmlFor="targetClass" className="text-right">
+                        Target
+                      </Label>
+                      <Select
+                        onValueChange={(value) => setTargetId(Number(value))}
+                      >
+                        <SelectTrigger className="col-span-3" id="targetClass">
                           <SelectValue placeholder="Select target class" />
                         </SelectTrigger>
                         <SelectContent>
-                          {classes.map(c => (
-                            <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                          {classes.map((c) => (
+                            <SelectItem key={c.id} value={c.id.toString()}>
+                              {c.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="associationType" className="text-right">Type</Label>
-                      <Select onValueChange={(value) => setAssShape(value.toString())} >
-                        <SelectTrigger className="col-span-3" id="associationType">
+                      <Label htmlFor="associationType" className="text-right">
+                        Type
+                      </Label>
+                      <Select
+                        onValueChange={(value) => setAssShape(value.toString())}
+                      >
+                        <SelectTrigger
+                          className="col-span-3"
+                          id="associationType"
+                        >
                           <SelectValue placeholder="Select association type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="association">Association</SelectItem>
-                          <SelectItem value="aggregation">Aggregation</SelectItem>
-                          <SelectItem value="composition">Composition</SelectItem>
-                          <SelectItem value="implement">Implementation</SelectItem>
-                          <SelectItem value="extends">Generalization</SelectItem>
+                          <SelectItem value="association">
+                            Association
+                          </SelectItem>
+                          <SelectItem value="aggregation">
+                            Aggregation
+                          </SelectItem>
+                          <SelectItem value="composition">
+                            Composition
+                          </SelectItem>
+                          <SelectItem value="implement">
+                            Implementation
+                          </SelectItem>
+                          <SelectItem value="extends">
+                            Generalization
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="associationType" className="text-right">Multiplicity</Label>
-                      <Select onValueChange={(value) => setMultiplicity(value.toString())} >
-                        <SelectTrigger className="col-span-3" id="associationType">
+                      <Label htmlFor="associationType" className="text-right">
+                        Multiplicity
+                      </Label>
+                      <Select
+                        onValueChange={(value) =>
+                          setMultiplicity(value.toString())
+                        }
+                      >
+                        <SelectTrigger
+                          className="col-span-3"
+                          id="associationType"
+                        >
                           <SelectValue placeholder="multiplicity" />
                         </SelectTrigger>
                         <SelectContent>
@@ -398,15 +485,24 @@ export default function UMLClassCreator(
                 </DialogContent>
               </Dialog>
               <ScrollArea className="h-[200px]">
-                {associations.map(association => (
-                  <div key={association.id} className="flex justify-between items-center p-2 border-b">
+                {associations.map((association) => (
+                  <div
+                    key={association.id}
+                    className="flex justify-between items-center p-2 border-b"
+                  >
                     <span>
-                      {classes.find(c => c.id === association.sourceId)?.name}
-                      {' -> '}
-                      {classes.find(c => c.id === association.targetId)?.name}
-                      {' ('}{association.shape}{')'}
+                      {classes.find((c) => c.id === association.sourceId)?.name}
+                      {" -> "}
+                      {classes.find((c) => c.id === association.targetId)?.name}
+                      {" ("}
+                      {association.shape}
+                      {")"}
                     </span>
-                    <Button variant="destructive" size="sm" onClick={() => deleteAssociation(association.id)}>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteAssociation(association.id)}
+                    >
                       Delete
                     </Button>
                   </div>
@@ -417,19 +513,28 @@ export default function UMLClassCreator(
         </Tabs>
       </CardContent>
       <CardFooter className="flex-col justify-between gap-5">
-        <div className='flex justify-between gap-2'>
-          <Button onClick={saveDiagramToDatabase} className="flex items-center bg-slate-800 hover:bg-slate-700">
+        <div className="flex justify-between gap-2">
+          <Button
+            onClick={saveDiagramToDatabase}
+            className="flex items-center bg-slate-800 hover:bg-slate-700"
+          >
             <Save className="mr-2 h-4 w-4" />
             Save Changes
           </Button>
-          <Button onClick={() => { }} className="flex items-center bg-slate-800 hover:bg-slate-700">
+
+          <Button
+            onClick={handleNavigation}
+            className="flex items-center bg-slate-800 hover:bg-slate-700"
+          >
             <Code className="mr-2 h-4 w-4" />
             Convert to Code
           </Button>
         </div>
         <AlertDialog open={aboutToLeave}>
           <AlertDialogTrigger asChild>
-            <Button onClick={() => setIsAboutToLeave(true)} variant="outline"><ArrowLeftFromLine /> Go Back</Button>
+            <Button onClick={() => setIsAboutToLeave(true)} variant="outline">
+              <ArrowLeftFromLine /> Go Back
+            </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -439,12 +544,16 @@ export default function UMLClassCreator(
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIsAboutToLeave(false)}>Stay here</AlertDialogCancel>
-              <AlertDialogAction onClick={() => router.push("/my-diagrams")}>Continue</AlertDialogAction>
+              <AlertDialogCancel onClick={() => setIsAboutToLeave(false)}>
+                Stay here
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={() => router.push("/my-diagrams")}>
+                Continue
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </CardFooter>
     </Card>
-  )
+  );
 }
