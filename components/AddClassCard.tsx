@@ -49,13 +49,15 @@ interface UMLClassCreatorInterface {
   diagram: Diagram;
   setDiagram: (newDiagram: Diagram) => void;
   saveDiagramToDatabase: () => Promise<void>;
+  handleNavigation: () => void;
 }
 
 export default function UMLClassCreator(
   {
     diagram,
     setDiagram,
-    saveDiagramToDatabase
+    saveDiagramToDatabase,
+    handleNavigation
 
   }: UMLClassCreatorInterface) {
 
@@ -422,7 +424,7 @@ export default function UMLClassCreator(
             <Save className="mr-2 h-4 w-4" />
             Save Changes
           </Button>
-          <Button onClick={() => { }} className="flex items-center bg-slate-800 hover:bg-slate-700">
+          <Button onClick={handleNavigation} className="flex items-center bg-slate-800 hover:bg-slate-700">
             <Code className="mr-2 h-4 w-4" />
             Convert to Code
           </Button>

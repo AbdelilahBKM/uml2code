@@ -1,0 +1,22 @@
+"use client";
+
+import ConvertToCode from "@/components/ConvertToCode";
+import useAuth from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+
+const Admin = () => {
+  const params = useParams();
+  const diagramId = params.diagramId?.toString();
+  const { isAuth } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+
+  if (!isAuth) {
+    return null;
+  }
+
+  return isClient && diagramId ? <ConvertToCode diagramId={diagramId} /> : null;
+};
+
+export default Admin;
