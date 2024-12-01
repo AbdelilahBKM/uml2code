@@ -12,6 +12,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
 
 export default function EditDiagram({ diagramId }: { diagramId: string }) {
   const token = useSelector((state: RootState) => state.auth.token);
@@ -19,6 +20,7 @@ export default function EditDiagram({ diagramId }: { diagramId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     const getDiagram = async () => {
@@ -83,6 +85,10 @@ export default function EditDiagram({ diagramId }: { diagramId: string }) {
     }
   };
 
+  const handleNavigation = () => {
+    router.push(`/my-diagrams/code/${diagramId}`);
+  };
+
   return isLoading ? (
     <div className="w-full h-screen flex items-center justify-center">
       <div>Loading...</div>
@@ -111,10 +117,11 @@ export default function EditDiagram({ diagramId }: { diagramId: string }) {
       )}
       <section className="w-fit h-full py-5 px-2">
         <UMLClassCreator
-          diagram={diagram}
-          setDiagram={setDiagram}
-          saveDiagramToDatabase={SaveDiagramToDatabase}
-        />
+              diagram={diagram}
+              setDiagram={setDiagram}
+              saveDiagramToDatabase={SaveDiagramToDatabase} 
+              handleNavigation={handleNavigation}        
+              />
       </section>
 
       {/* Main Content */}
