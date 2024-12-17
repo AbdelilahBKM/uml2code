@@ -277,7 +277,12 @@ export async function updateDiagram(request: Request, userId: string) {
             })
         )
     )
-
+    
+    await prisma.project.update({
+        where: { id: projectId },
+        data: { updated_at: new Date() }
+    });
+    
     const updatedDiagram = await prisma.diagram.findUnique({
         where: { id: DiagramId! },
         select: {

@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Save, Code, CirclePlus, ArrowLeftFromLine } from 'lucide-react'
+import { Save, Code, CirclePlus, ArrowLeftFromLine, Edit, Trash } from 'lucide-react'
 import { UMLClass, UMLAssociation, Method, Attribute, Diagram } from '@/types/UMLClass.Type'
 import { useRouter } from 'next/navigation'
 
@@ -58,7 +58,6 @@ export default function UMLClassCreator(
     setDiagram,
     saveDiagramToDatabase,
     handleNavigation
-
   }: UMLClassCreatorInterface) {
 
   const [className, setClassName] = useState<string>('');
@@ -77,6 +76,8 @@ export default function UMLClassCreator(
   const [classes, setClasses] = useState<UMLClass[]>([]);
   const [associations, setAssociations] = useState<UMLAssociation[]>([]);
   const [aboutToLeave, setIsAboutToLeave] = useState(false);
+  const [editingAttributes, setEditingAttribute] = useState<Attribute | null>(null);
+  const [editingMethods, setEditingMethod] = useState<Method | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -162,6 +163,60 @@ export default function UMLClassCreator(
     }
   }
 
+  const updateAttribute = (updatedAttribute: Attribute) => {
+    if (selectedClass) {
+      const updatedAttributes = selectedClass.attributes.map(attr =>
+        attr.id === updatedAttribute.id ? updatedAttribute : attr
+      );
+      const updatedClass = {
+        ...selectedClass,
+        attributes: updatedAttributes
+      };
+      setClasses(classes.map(c => c.id === selectedClass.id ? updatedClass : c));
+      setSelectedClass(updatedClass);
+      setEditingAttribute(null);
+    }
+  }
+
+  const updateMethod = (updatedMethod: Method) => {
+    if (selectedClass) {
+      const updatedMethods = selectedClass.methods.map(method =>
+        method.id === updatedMethod.id ? updatedMethod : method
+      );
+      const updatedClass = {
+        ...selectedClass,
+        methods: updatedMethods
+      };
+      setClasses(classes.map(c => c.id === selectedClass.id ? updatedClass : c));
+      setSelectedClass(updatedClass);
+      setEditingMethod(null);
+    }
+  }
+
+  const deleteAttribute = (attributeId: number) => {
+    if (selectedClass) {
+      const updatedAttributes = selectedClass.attributes.filter(attr => attr.id !== attributeId);
+      const updatedClass = {
+        ...selectedClass,
+        attributes: updatedAttributes
+      };
+      setClasses(classes.map(c => c.id === selectedClass.id ? updatedClass : c));
+      setSelectedClass(updatedClass);
+    }
+  }
+
+  const deleteMethod = (methodId: number) => {
+    if (selectedClass) {
+      const updatedMethods = selectedClass.methods.filter(method => method.id !== methodId);
+      const updatedClass = {
+        ...selectedClass,
+        methods: updatedMethods
+      };
+      setClasses(classes.map(c => c.id === selectedClass.id ? updatedClass : c));
+      setSelectedClass(updatedClass);
+    }
+  }
+
   const addAssociation = () => {
     if (targetId && sourceId && associationShape) {
       const newAssociation: UMLAssociation = {
@@ -170,7 +225,6 @@ export default function UMLClassCreator(
         targetId: targetId,
         shape: associationShape,
         label: multiplicity
-
       }
       setAssociations([...associations, newAssociation])
     }
@@ -279,7 +333,14 @@ export default function UMLClassCreator(
                     <ScrollArea className="h-20 mt-2">
                       <ul className="list-disc pl-4">
                         {selectedClass.attributes.map((attr) => (
-                          <li key={attr.id}>{`${attr.visibility} ${attr.name}: ${attr.type}`}</li>
+                          <li key={attr.id} className="flex justify-between items-center">
+                            <span>{`${attr.visibility} ${attr.name}: ${attr.type}`}</span>
+                            <div>
+                              <Button variant="ghost" size="sm" onClick={() => deleteAttribute(attr.id)}>
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </li>
                         ))}
                       </ul>
                     </ScrollArea>
@@ -314,8 +375,15 @@ export default function UMLClassCreator(
                     </div>
                     <ScrollArea className="h-20 mt-2">
                       <ul className="list-disc pl-4">
-                        {selectedClass.methods.map((method, index) => (
-                          <li key={index}>{`${method.visibility} ${method.name}(): ${method.returnType}`}</li>
+                        {selectedClass.methods.map((method) => (
+                          <li key={method.id} className="flex justify-between items-center">
+                            <span>{`${method.visibility} ${method.name}(): ${method.returnType}`}</span>
+                            <div>
+                              <Button variant="ghost" size="sm" onClick={() => deleteMethod(method.id)}>
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </li>
                         ))}
                       </ul>
                     </ScrollArea>
