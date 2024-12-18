@@ -90,228 +90,111 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
   };
 
   const convertToPython = (
-    classes: UMLClass[],
-    associations: UMLAssociation[]
-  ) => {
-    const classInheritanceMap = new Map<number, string>();
-    const classImplementationMap = new Map<number, string[]>();
-    const classAttributeMap = new Map<string, UMLClass["attributes"]>();
-    const classAssociationMap = new Map<number, UMLAssociation[]>();
+    classes: UMLClass[], // Liste des classes UML
+    associations: UMLAssociation[] // Liste des associations UML (ex : héritage, implémentation)
+  ): string => {
+    const classInheritanceMap = new Map<number, string>(); // stocker les relations d'héritage (id de l'enfant, nom de la classe parent)
+    const classImplementationMap = new Map<number, string[]>(); // stocker les relations d'implémentation (id source, interfaces implémentées)
 
-    // Map classes and their attributes
-    classes.forEach((cls) => {
-      classAttributeMap.set(cls.name, cls.attributes);
-    });
-
-    // Map associations to classes
+    // Étape 1 : Traiter les associations pour l'héritage et l'implémentation
     associations.forEach((assoc) => {
-      if (assoc.shape === "association") {
-        const sourceAssociations =
-          classAssociationMap.get(assoc.sourceId) || [];
-        classAssociationMap.set(assoc.sourceId, [...sourceAssociations, assoc]);
-      }
-    });
-
-    // Process inheritance and implementation associations
-    associations.forEach((assoc) => {
-      switch (assoc.shape) {
-        case "extends":
-          const parentClass = classes.find((c) => c.id === assoc.targetId);
-          const childClass = classes.find((c) => c.id === assoc.sourceId);
-
-          if (parentClass && childClass) {
-            classInheritanceMap.set(assoc.sourceId, parentClass.name);
-
-            // Merge attributes from parent class
-            const parentAttributes =
-              classAttributeMap.get(parentClass.name) || [];
-            const childAttributes =
-              classAttributeMap.get(childClass.name) || [];
-            classAttributeMap.set(childClass.name, [
-              ...parentAttributes,
-              ...childAttributes.filter(
-                (childAttr) =>
-                  !parentAttributes.some(
-                    (parentAttr) => parentAttr.name === childAttr.name
-                  )
-              ),
-            ]);
-          }
-          break;
-        case "implement":
-          const implementedInterface = classes.find(
-            (c) => c.id === assoc.targetId
-          )?.name;
-          if (implementedInterface) {
-            const currentImplements =
-              classImplementationMap.get(assoc.sourceId) || [];
-            classImplementationMap.set(assoc.sourceId, [
-              ...currentImplements,
-              implementedInterface,
-            ]);
-          }
-          break;
+      if (assoc.shape === "extends") {
+        // Si l'association est de type héritage (extends)
+        const parentClass = classes.find((c) => c.id === assoc.targetId)?.name; // Trouver la classe parente
+        if (parentClass) classInheritanceMap.set(assoc.sourceId, parentClass); // Ajouter la relation
+      } else if (assoc.shape === "implement") {
+        // Si l'association est de type implémentation (implement)
+        const implementedInterface = classes.find(
+          (c) => c.id === assoc.targetId // Trouver l'interface à implémenter
+        )?.name;
+        if (implementedInterface) {
+          const current = classImplementationMap.get(assoc.sourceId) || []; // Récupérer les interfaces déjà associées
+          classImplementationMap.set(assoc.sourceId, [
+            ...current,
+            implementedInterface, // Ajouter l'interface actuelle
+          ]);
+        }
       }
     });
 
     let pythonCode = "";
 
-    // Import statements
+    // Étape 2 : Ajouter les imports si des classes abstraites ou des interfaces sont présentes
     const hasAbstractOrInterface = classes.some(
-      (cls) => cls.shape === "abstract" || cls.shape === "interface"
+      (cls) => cls.shape === "abstract" || cls.shape === "interface" // Vérifier la présence de classes abstraites ou d'interfaces
     );
-    const hasAssociations = associations.some(
-      (assoc) => assoc.shape === "association"
-    );
+    if (hasAbstractOrInterface)
+      pythonCode += "from abc import ABC, abstractmethod\n\n"; // Importation des bases pour les classes abstraites
 
-    if (hasAbstractOrInterface) {
-      pythonCode += "from abc import ABC, abstractmethod\n";
-    }
-    if (hasAssociations) {
-      pythonCode += "from typing import List, Optional\n";
-    }
-    pythonCode += "\n";
-
+    // Étape 3 : Générer le code pour chaque classe UML
     classes.forEach((cls) => {
-      // Determine base class and inheritance
-      const parentClass = classInheritanceMap.get(cls.id);
-      const implementedInterfaces = classImplementationMap.get(cls.id);
-
-      const baseClass =
-        cls.shape === "interface"
-          ? "ABC"
-          : cls.shape === "abstract"
-          ? "ABC"
-          : parentClass || "object";
-
-      // Multiple inheritance support
+      const parentClass = classInheritanceMap.get(cls.id); // Récupérer la classe parente
+      const implementedInterfaces = classImplementationMap.get(cls.id) || []; // Récupérer les interfaces implémentées
       const inheritanceList = [
-        ...(parentClass ? [parentClass] : []),
-        ...(implementedInterfaces || []),
+        ...(parentClass ? [parentClass] : []), // Ajouter la classe parente si elle existe
+        ...implementedInterfaces, // Ajouter les interfaces implémentées
       ];
+      const baseClass =
+        cls.shape === "interface" || cls.shape === "abstract" // Définir la base de la classe selon son type
+          ? "ABC" // Les classes abstraites et interfaces héritent de ABC (Abstract Base Class)
+          : "object"; // Sinon, elles héritent de 'object' par défaut
 
-      // Class definition
+      // Déclaration de la classe en Python
       pythonCode += `class ${cls.name}(${
-        inheritanceList.join(", ") || baseClass
+        inheritanceList.length > 0 ? inheritanceList.join(", ") : baseClass
       }):\n`;
 
-      // Find unique attributes
-      const parentCls = parentClass
-        ? classes.find((c) => c.name === parentClass)
-        : null;
-      const parentAttributes = parentCls ? parentCls.attributes : [];
-      const childAttributes = cls.attributes;
-
-      const uniqueAttributes = childAttributes.filter(
-        (childAttr) =>
-          !parentAttributes.some(
-            (parentAttr) => parentAttr.name === childAttr.name
-          )
+      // Étape 4 : Générer les attributs pour le constructeur
+      const parentAttributes = parentClass
+        ? classes.find((c) => c.name === parentClass)?.attributes || [] // Récupérer les attributs de la classe parente
+        : [];
+      const uniqueAttributes = cls.attributes.filter(
+        // Identifier les attributs uniques
+        (attr) =>
+          !parentAttributes.some((parentAttr) => parentAttr.name === attr.name)
       );
 
-      // Handle associations
-      const classAssociations = classAssociationMap.get(cls.id) || [];
-      const associationAttributes = classAssociations.map((assoc) => {
-        const targetClass = classes.find((c) => c.id === assoc.targetId);
-        return {
-          name: targetClass
-            ? targetClass.name.toLowerCase() +
-              (assoc.label?.includes("*") ? "_list" : "")
-            : "associated_class",
-          type: targetClass ? targetClass.name : "object",
-          multiplicity: assoc.label || "1:1",
-        };
-      });
-
-      // Combine all attributes
-      const combinedAttributes = [
-        ...parentAttributes,
-        ...uniqueAttributes,
-        ...associationAttributes.map((assocAttr) => ({
-          name: assocAttr.name,
-          type: assocAttr.multiplicity.includes("*")
-            ? `List[${assocAttr.type}]`
-            : assocAttr.type,
-          visibility: "+",
-        })),
-      ];
-
-      // If no attributes, add pass
-      if (combinedAttributes.length === 0 && cls.methods.length === 0) {
-        pythonCode += "    pass\n\n";
-        return;
-      }
-
-      // Constructor
-      pythonCode += `    def __init__(self${
-        combinedAttributes.length > 0
-          ? ", " + combinedAttributes.map((attr) => attr.name).join(", ")
-          : ""
-      }):\n`;
-
-      // Call parent constructor
-      if (parentClass) {
-        const parentClassObj = classes.find((c) => c.name === parentClass);
-        const parentAttrNames = parentAttributes.map((attr) => attr.name);
-
-        if (parentClassObj) {
-          if (parentAttrNames.length > 0) {
-            pythonCode += `        super().__init__(${parentAttrNames.join(
-              ", "
-            )})\n`;
-          } else {
-            pythonCode += "        super().__init__()\n";
-          }
-        } else {
-          pythonCode += "        super().__init__()\n";
+      // Générer le constructeur (__init__)
+      if (cls.attributes.length || parentAttributes.length) {
+        const allAttributes = [...parentAttributes, ...uniqueAttributes]; // Combiner les attributs parentaux et uniques
+        pythonCode += `    def __init__(self, ${allAttributes
+          .map((attr) => attr.name) // Liste des paramètres du constructeur
+          .join(", ")}):\n`;
+        if (parentClass) {
+          // Appeler le constructeur de la classe parente si elle existe
+          pythonCode += `        super().__init__(${parentAttributes
+            .map((attr) => attr.name)
+            .join(", ")})\n`;
         }
+        uniqueAttributes.forEach((attr) => {
+          // Initialiser les attributs uniques
+          pythonCode += `        self.${attr.name} = ${attr.name}\n`;
+        });
+      } else {
+        pythonCode += "    pass\n"; // Ajouter un pass si le constructeur est vide
       }
 
-      // Set attributes
-      uniqueAttributes.forEach((attr) => {
-        pythonCode += `        self.${attr.name} = ${attr.name}\n`;
-      });
-
-      associationAttributes.forEach((assocAttr) => {
-        if (assocAttr.multiplicity.includes("*")) {
-          pythonCode += `        self.${assocAttr.name} = ${assocAttr.name} or []\n`;
-        } else {
-          pythonCode += `        self.${assocAttr.name} = ${assocAttr.name}\n`;
-        }
-      });
-
-      // If no attributes added, add pass to constructor
-      if (uniqueAttributes.length === 0 && associationAttributes.length === 0) {
-        pythonCode += "        pass\n";
-      }
-
-      // Methods
+      // Étape 5 : Générer les méthodes de la classe
       cls.methods.forEach((method) => {
-        const isAbstractMethod =
-          cls.shape === "interface" || cls.shape === "abstract";
-        const abstractDecorator = isAbstractMethod
-          ? "    @abstractmethod\n"
-          : "";
-
-        pythonCode += abstractDecorator;
-        pythonCode += `    def ${method.name}(self${
-          (method.parameters || []).length > 0
-            ? ", " + (method.parameters || []).map((p) => p.name).join(", ")
+        const isAbstract =
+          cls.shape === "abstract" || cls.shape === "interface"; // Déterminer si la méthode est abstraite
+        const decorator = isAbstract ? "    @abstractmethod\n" : ""; // Ajouter le décorateur @abstractmethod si nécessaire
+        pythonCode += `${decorator}    def ${method.name}(self${
+          method.parameters && method.parameters.length // Ajouter les paramètres si disponibles
+            ? ", " + method.parameters.map((p) => p.name).join(", ")
             : ""
         }):\n`;
-
-        if (isAbstractMethod) {
-          pythonCode += "        raise NotImplementedError()\n\n";
+        if (isAbstract) {
+          pythonCode += "        raise NotImplementedError()\n"; // Lever une exception pour les méthodes abstraites
         } else {
-          pythonCode += `        # TODO: Implement ${method.name} method\n`;
-          pythonCode += "        pass\n\n";
+          pythonCode += "        # TODO: Implement this method\n        pass\n"; // Ajouter un commentaire pour les méthodes normales
         }
       });
 
-      pythonCode += "\n";
+      pythonCode += "\n"; // Ajouter une ligne vide entre les classes
     });
 
-    return pythonCode;
+    return pythonCode; // Retourner le code Python final
   };
 
   const convertToJava = (
@@ -359,60 +242,65 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
       }
     });
 
-    let javaCode = "import java.util.List;\nimport java.util.ArrayList;\n\n";
+    let javaCode = "import java.util.List;\nimport java.util.ArrayList;\n\n"; // Imports de base pour les listes et collections
 
     classes.forEach((cls) => {
-      // Determine class type and modifiers
+      // Parcourt chaque classe du diagramme UML
+      // Déterminer le type et les modificateurs de la classe
       const classModifier =
         cls.shape === "interface"
-          ? "interface"
+          ? "interface" // Si c'est une interface
           : cls.shape === "abstract"
-          ? "abstract class"
-          : "class";
+          ? "abstract class" // Si c'est une classe abstraite
+          : "class"; // Sinon une classe standard
 
-      // Determine inheritance and implementation
-      const parentClass = classInheritanceMap.get(cls.id);
-      const implementedInterfaces = classImplementationMap.get(cls.id);
+      // Déterminer l'héritage et les implémentations
+      const parentClass = classInheritanceMap.get(cls.id); // Récupère la classe parente
+      const implementedInterfaces = classImplementationMap.get(cls.id); // Récupère les interfaces implémentées
 
+      // Construire la déclaration de la classe
       let classDeclaration = `public ${classModifier} ${cls.name}`;
 
+      // Gestion de l'héritage (extends)
       if (parentClass && cls.shape !== "interface") {
-        classDeclaration += ` extends ${parentClass}`;
+        classDeclaration += ` extends ${parentClass}`; // Ajoute la classe parente si existante
       }
 
+      // Gestion des implémentations
       if (implementedInterfaces && implementedInterfaces.length > 0) {
         classDeclaration +=
           cls.shape === "interface"
-            ? ` extends ${implementedInterfaces.join(", ")}`
-            : ` implements ${implementedInterfaces.join(", ")}`;
+            ? ` extends ${implementedInterfaces.join(", ")}` // Pour les interfaces
+            : ` implements ${implementedInterfaces.join(", ")}`; // Pour les classes
       }
 
-      classDeclaration += " {\n";
+      classDeclaration += " {\n"; // Début du corps de la classe
       javaCode += classDeclaration;
 
-      // Find parent class attributes if exists
+      // Trouver les attributs de la classe parente
       const parentCls = parentClass
         ? classes.find((c) => c.name === parentClass)
         : null;
-      const parentAttributes = parentCls ? parentCls.attributes : [];
+      const parentAttributes = parentCls ? parentCls.attributes : []; // Attributs du parent
 
-      // Prepare child class attributes
+      // Préparer les attributs de la classe courante
       const childAttributes = cls.attributes;
 
-      // Handle associations
-      const classAssociations = classAssociationMap.get(cls.id) || [];
+      // Gérer les associations
+      const classAssociations = classAssociationMap.get(cls.id) || []; // Récupère les associations
       const associationAttributes = classAssociations.map((assoc) => {
+        // Convertit les associations en attributs
         const targetClass = classes.find((c) => c.id === assoc.targetId);
         return {
           name: targetClass
-            ? targetClass.name.toLowerCase() + "s" // Force plural
+            ? targetClass.name.toLowerCase() + "s" // Nom en minuscules au pluriel
             : "associatedClass",
-          type: targetClass ? targetClass.name : "Object",
-          multiplicity: "*", // Force multiplicity to be a list
+          type: targetClass ? targetClass.name : "Object", // Type de l'association
+          multiplicity: "*", // Force la multiplicité à être une liste
         };
       });
 
-      // Filter out attributes that are duplicates from parent
+      // Filtrer les attributs uniques (non présents dans la classe parent)
       const uniqueAttributes = childAttributes.filter(
         (childAttr) =>
           !parentAttributes.some(
@@ -420,22 +308,23 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
           )
       );
 
-      // Combine all attributes
+      // Combiner tous les attributs
       const combinedAttributes = [
-        ...parentAttributes,
-        ...uniqueAttributes,
+        ...parentAttributes, // Attributs du parent
+        ...uniqueAttributes, // Attributs uniques de l'enfant
         ...associationAttributes.map((assocAttr) => ({
+          // Attributs des associations
           name: assocAttr.name,
           type: assocAttr.multiplicity.includes("*")
-            ? `List<${assocAttr.type}>`
+            ? `List<${assocAttr.type}>` // Type List si multiplicité multiple
             : assocAttr.type,
           visibility: "+",
         })),
       ];
 
-      // Attributes
+      // Générer les déclarations d'attributs
       combinedAttributes.forEach((attr) => {
-        const visibility =
+        const visibility = // Convertir la visibilité
           attr.visibility === "+"
             ? "public"
             : attr.visibility === "-"
@@ -444,9 +333,9 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
         javaCode += `    ${visibility} ${attr.type} ${attr.name};\n`;
       });
 
-      // Constructor
+      // Constructeur (sauf pour les interfaces)
       if (cls.shape !== "interface") {
-        // Primary constructor with all attributes
+        // Paramètres du constructeur
         const constructorParams = [
           ...parentAttributes.map((attr) => `${attr.type} ${attr.name}`),
           ...uniqueAttributes.map((attr) => `${attr.type} ${attr.name}`),
@@ -457,12 +346,13 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
           ),
         ];
 
+        // Générer le constructeur
         if (constructorParams.length > 0) {
           javaCode += `    public ${cls.name}(${constructorParams.join(
             ", "
           )}) {\n`;
 
-          // Call parent constructor with parent attributes
+          // Appel du constructeur parent
           if (parentClass) {
             const parentAttrNames = parentAttributes.map((attr) => attr.name);
             if (parentAttrNames.length > 0) {
@@ -472,12 +362,12 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
             }
           }
 
-          // Set child attributes
+          // Initialiser les attributs uniques
           uniqueAttributes.forEach((attr) => {
             javaCode += `        this.${attr.name} = ${attr.name};\n`;
           });
 
-          // Set association attributes
+          // Initialiser les attributs d'association
           associationAttributes.forEach((assocAttr) => {
             if (assocAttr.multiplicity.includes("*")) {
               javaCode += `        this.${assocAttr.name} = ${assocAttr.name} != null ? ${assocAttr.name} : new ArrayList<>();\n`;
@@ -488,13 +378,14 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
 
           javaCode += `    }\n\n`;
         } else if (parentClass) {
-          // Default constructor that calls parent's default constructor
+          // Constructeur par défaut qui appelle le constructeur parent
           javaCode += `    public ${cls.name}() {\n        super();\n    }\n\n`;
         } else {
+          // Constructeur par défaut simple
           javaCode += `    public ${cls.name}() {\n    }\n\n`;
         }
 
-        // Getter and setter methods for association attributes
+        // Générer les getters et setters pour les attributs d'association
         associationAttributes.forEach((assocAttr) => {
           // Getter
           javaCode += `    public ${assocAttr.type} get${
@@ -517,7 +408,7 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
           }
           javaCode += `    }\n\n`;
 
-          // Add method for list attributes
+          // Méthode d'ajout pour les attributs de liste
           if (assocAttr.multiplicity.includes("*")) {
             javaCode += `    public void add${
               assocAttr.name.charAt(0).toUpperCase() +
@@ -534,9 +425,10 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
         });
       }
 
-      // Methods (if not an interface)
+      // Méthodes (sauf pour les interfaces)
       if (cls.shape !== "interface") {
         cls.methods.forEach((method) => {
+          // Déterminer la visibilité
           const visibility =
             method.visibility === "+"
               ? "public"
@@ -544,6 +436,7 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
               ? "private"
               : "protected";
 
+          // Préparer les paramètres de la méthode
           const params =
             (method.parameters || []).length > 0
               ? (method.parameters || [])
@@ -551,10 +444,11 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
                   .join(", ")
               : "";
 
+          // Générer la déclaration de la méthode
           javaCode += `    ${visibility} ${method.returnType} ${method.name}(${params}) {\n`;
           javaCode += `        // TODO: Implement ${method.name} method\n`;
 
-          // Provide a default return based on return type
+          // Valeur de retour par défaut selon le type
           const defaultReturn =
             method.returnType === "int"
               ? "return 0;"
@@ -612,81 +506,84 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
       }
     });
 
-    let phpCode = "<?php\n\n";
+    let phpCode = "<?php\n\n"; // Début du code PHP
 
     classes.forEach((cls) => {
-      // Determine class type and modifiers
+      // Déterminer le type et les modificateurs de la classe
       const classModifier =
         cls.shape === "interface"
-          ? "interface"
+          ? "interface" // Si la classe est une interface
           : cls.shape === "abstract"
-          ? "abstract "
-          : "";
+          ? "abstract " // Si la classe est abstraite
+          : ""; // Classe standard
 
-      // Determine inheritance and implementation
-      const parentClass = classInheritanceMap.get(cls.id);
-      const implementedInterfaces = classImplementationMap.get(cls.id);
+      // Déterminer l'héritage et les interfaces implémentées
+      const parentClass = classInheritanceMap.get(cls.id); // Obtenir le nom de la classe parente si elle existe
+      const implementedInterfaces = classImplementationMap.get(cls.id); // Obtenir les interfaces implémentées
 
+      // Construire la déclaration de la classe
       let classDeclaration = `${classModifier}class ${cls.name}`;
 
+      // Ajouter l'héritage si applicable
       if (parentClass && cls.shape !== "interface") {
-        classDeclaration += ` extends ${parentClass}`;
+        classDeclaration += ` extends ${parentClass}`; // Hériter de la classe parente
       }
 
+      // Ajouter les interfaces implémentées si applicable
       if (implementedInterfaces && implementedInterfaces.length > 0) {
         classDeclaration +=
           cls.shape === "interface"
-            ? ` extends ${implementedInterfaces.join(", ")}`
-            : ` implements ${implementedInterfaces.join(", ")}`;
+            ? ` extends ${implementedInterfaces.join(", ")}` // Pour les interfaces
+            : ` implements ${implementedInterfaces.join(", ")}`; // Pour les classes
       }
 
-      classDeclaration += " {\n";
-      phpCode += classDeclaration;
+      classDeclaration += " {\n"; // Ouvrir le corps de la classe
+      phpCode += classDeclaration; // Ajouter la déclaration de classe au code PHP
 
-      // Find parent class attributes if exists
+      // Trouver les attributs de la classe parente si elle existe
       const parentCls = parentClass
-        ? classes.find((c) => c.name === parentClass)
+        ? classes.find((c) => c.name === parentClass) // Trouver l'objet de la classe parente
         : null;
-      const parentAttributes = parentCls ? parentCls.attributes : [];
+      const parentAttributes = parentCls ? parentCls.attributes : []; // Obtenir les attributs de la classe parente
 
-      // Prepare child class attributes
-      const childAttributes = cls.attributes;
+      // Préparer les attributs de la classe enfant
+      const childAttributes = cls.attributes; // Obtenir les attributs de la classe enfant
 
-      // Filter out attributes that are duplicates from parent
+      // Filtrer les attributs pour exclure les doublons de la classe parente
       const uniqueAttributes = childAttributes.filter(
         (childAttr) =>
           !parentAttributes.some(
-            (parentAttr) => parentAttr.name === childAttr.name
+            (parentAttr) => parentAttr.name === childAttr.name // Exclure les doublons
           )
       );
 
-      // Attributes
+      // Combiner tous les attributs pour la classe
       const allAttributes = [...parentAttributes, ...uniqueAttributes];
 
-      // Only add unique attributes
+      // Ajouter les attributs uniques de l'enfant au code PHP
       uniqueAttributes.forEach((attr) => {
         const visibility =
           attr.visibility === "+"
-            ? "public"
+            ? "public" // Attribut public
             : attr.visibility === "-"
-            ? "private"
-            : "protected";
-        phpCode += `    ${visibility} $${attr.name};\n`;
+            ? "private" // Attribut privé
+            : "protected"; // Attribut protégé
+        phpCode += `    ${visibility} $${attr.name};\n`; // Déclaration de l'attribut
       });
 
-      // Constructor
+      // Constructeur
       if (cls.shape !== "interface") {
-        // Primary constructor with all attributes
+        // Constructeur principal avec tous les attributs
         const constructorParams = [
-          ...parentAttributes.map((attr) => `$${attr.name}`),
-          ...uniqueAttributes.map((attr) => `$${attr.name}`),
+          ...parentAttributes.map((attr) => `$${attr.name}`), // Paramètres des attributs de parent
+          ...uniqueAttributes.map((attr) => `$${attr.name}`), // Paramètres des attributs uniques
         ];
 
         phpCode += `    public function __construct(${constructorParams.join(
           ", "
         )}) {\n`;
 
-        // Call parent constructor with parent attributes
+        // Appeler le constructeur parent avec les attributs parent
         if (parentClass) {
           const parentAttrNames = parentAttributes.map(
             (attr) => `$${attr.name}`
@@ -694,62 +591,63 @@ export default function ConvertToCode({ diagramId }: { diagramId: string }) {
           if (parentAttrNames.length > 0) {
             phpCode += `        parent::__construct(${parentAttrNames.join(
               ", "
-            )});\n`;
+            )});\n`; // Appel du constructeur parent
           } else {
-            phpCode += "        parent::__construct();\n";
+            phpCode += "        parent::__construct();\n"; // Appel du constructeur par défaut
           }
         }
 
-        // Set child attributes
+        // Initialiser les attributs enfants
         uniqueAttributes.forEach((attr) => {
-          phpCode += `        $this->${attr.name} = $${attr.name};\n`;
+          phpCode += `        $this->${attr.name} = $${attr.name};\n`; // Initialisation de l'attribut
         });
-        phpCode += `    }\n\n`;
+        phpCode += `    }\n\n`; // Fin du constructeur
       }
 
-      // Methods
+      // Méthodes
       cls.methods.forEach((method) => {
-        // Skip method generation for interfaces
+        // Ignorer la génération de méthodes pour les interfaces
         if (cls.shape === "interface") return;
 
         const visibility =
           method.visibility === "+"
-            ? "public"
+            ? "public" // Visibilité publique
             : method.visibility === "-"
-            ? "private"
-            : "protected";
+            ? "private" // Visibilité privée
+            : "protected"; // Visibilité protégée
 
+        // Préparer les paramètres de la méthode
         const params =
           (method.parameters || []).length > 0
             ? (method.parameters || [])
                 .map((p) => `${p.type} ${p.name}`)
-                .join(", ")
+                .join(", ") // Liste des paramètres
             : "";
 
         phpCode += `    ${visibility} function ${method.name}(${params}) {\n`;
-        phpCode += `        // TODO: Implement ${method.name} method\n`;
+        phpCode += `        // TODO: Implémenter la méthode ${method.name}\n`;
 
-        // Provide a default return based on return type
+        // Fournir une valeur de retour par défaut selon le type de retour
         const defaultReturn =
           method.returnType === "int"
-            ? "return 0;"
+            ? "return 0;" // Valeur par défaut pour un entier
             : method.returnType === "bool"
-            ? "return false;"
+            ? "return false;" // Valeur par défaut pour un booléen
             : method.returnType === "float"
-            ? "return 0.0;"
+            ? "return 0.0;" // Valeur par défaut pour un flottant
             : method.returnType === "void"
-            ? ""
-            : "return null;";
+            ? "" // Aucune valeur pour void
+            : "return null;"; // Valeur par défaut pour les autres types
 
-        phpCode += `        ${defaultReturn}\n`;
-        phpCode += `    }\n\n`;
+        phpCode += `        ${defaultReturn}\n`; // Ajouter la valeur de retour
+        phpCode += `    }\n\n`; // Fin de la méthode
       });
 
-      phpCode += "}\n\n";
+      phpCode += "}\n\n"; // Fin de la classe
     });
 
-    phpCode += "?>";
-    return phpCode;
+    phpCode += "?>"; // Fin du code PHP
+    return phpCode; // Retourner le code PHP généré
   };
 
   const downloadCode = () => {
